@@ -12,8 +12,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -77,7 +80,7 @@ fun TopBar(navController: NavHostController) {
             },
         ) {
             Icon(
-                Icons.Default.List,
+                Icons.Default.Menu,
                 "Menu Button"
             )
         }
@@ -103,10 +106,35 @@ fun BottomBar(navController: NavHostController) {
                 navController.navigate(Screen.Main.route)
             },
             Modifier.weight(1f)
+
         ) {
             Icon(
                 Icons.Default.Home,
                 "Home button"
+            )
+        }
+
+        TextButton(
+            onClick = {
+                navController.navigate(Screen.Main.route)
+            },
+            Modifier.weight(1f)
+        ) {
+            Icon(
+                Icons.Default.Build,
+                "Upgrades Button"
+            )
+        }
+
+        TextButton(
+            onClick = {
+                navController.navigate(Screen.Main.route)
+            },
+            Modifier.weight(1f)
+        ) {
+            Icon(
+                Icons.Default.DateRange,
+                "History button"
             )
         }
     }
