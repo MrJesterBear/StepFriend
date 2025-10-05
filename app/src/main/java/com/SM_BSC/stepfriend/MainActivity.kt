@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun InitUX(innerPadding: PaddingValues) {
+fun InitUX() {
     val viewModel: MainViewModel = viewModel()
 
     StepFriendScreen(viewModel)
@@ -48,4 +48,13 @@ fun InitUX(innerPadding: PaddingValues) {
 @Composable
 fun StepFriendScreen(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+}
+
+/**
+ * Preview for Android Studio IDE.
+ */
+@Preview
+@Composable
+fun StepFriendPreview() {
+    InitUX()
 }
