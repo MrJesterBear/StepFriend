@@ -37,8 +37,11 @@ import com.SM_BSC.stepfriend.ui.Screen
 import com.SM_BSC.stepfriend.ui.models.MainViewModel
 import com.SM_BSC.stepfriend.ui.theme.StepFriendTheme
 import androidx.navigation.compose.composable
+import com.SM_BSC.stepfriend.ui.HistoryScreen
+import com.SM_BSC.stepfriend.ui.InformationScreen
 import com.SM_BSC.stepfriend.ui.MainScreen
-
+import com.SM_BSC.stepfriend.ui.MenuScreen
+import com.SM_BSC.stepfriend.ui.UpgradeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,8 +68,20 @@ fun InitUX() {
             bottomBar = { BottomBar(navController) }
         ) { innerPadding ->
             NavHost(navController = navController, startDestination = Screen.Main.route) {
-                composable(route = Screen.Main.route) {
-                    MainScreen(innerPadding)
+                composable(route = Screen.Main.route) { // Main Screen
+                    MainScreen(innerPadding, viewModel)
+                }
+                composable(route = Screen.Menu.route) { // Menu Screen
+                    MenuScreen(innerPadding)
+                }
+                composable(route = Screen.History.route) { // History Screen
+                    HistoryScreen(innerPadding)
+                }
+                composable(route = Screen.Upgrade.route) { // Upgrades Screen
+                    UpgradeScreen(innerPadding)
+                }
+                composable(route = Screen.Information.route) { // Information Screen
+                    InformationScreen(innerPadding)
                 }
         }
     }
@@ -102,7 +117,6 @@ fun TopBar(navController: NavHostController) {
     })
 }
 
-
 @Composable
 fun BottomBar(navController: NavHostController) {
     BottomAppBar {
@@ -122,7 +136,7 @@ fun BottomBar(navController: NavHostController) {
 
         TextButton( // Upgrades Button
             onClick = {
-                navController.navigate(Screen.Main.route)
+                navController.navigate(Screen.Upgrade.route)
             },
             Modifier.weight(1f).size(60.dp)
         ) {
@@ -135,14 +149,14 @@ fun BottomBar(navController: NavHostController) {
 
         TextButton( // Information Button
             onClick = {
-                navController.navigate(Screen.Main.route)
+                navController.navigate(Screen.Information.route)
             },
-            Modifier.weight(1f).size(65.dp)
+            Modifier.weight(1f).size(60.dp)
         ) {
             Icon(
                 Icons.Default.Info,
                 "Information button",
-                Modifier.size(65.dp)
+                Modifier.size(60.dp)
             )
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.SM_BSC.stepfriend.ui.models.MainViewModel
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -16,11 +17,25 @@ sealed class Screen (var route: String) {
 }
 
 @Composable
-fun MainScreen(innerPadding: PaddingValues) {
+fun MenuScreen(innerPadding: PaddingValues) {
+
+}
+@Composable
+fun MainScreen(innerPadding: PaddingValues, viewModel: MainViewModel) {
     Text(text = "Welcome to the App!", Modifier.padding(innerPadding))
 }
 
 @Composable
-fun MenuScreen(innerPadding: PaddingValues) {
+fun HistoryScreen(innerPadding: PaddingValues) {
+
+}
+
+@Composable
+fun UpgradeScreen(innerPadding: PaddingValues) {
+
+}
+
+@Composable
+fun InformationScreen(innerPadding: PaddingValues) {
 
 }
