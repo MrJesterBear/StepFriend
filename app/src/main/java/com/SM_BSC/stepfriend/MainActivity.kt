@@ -11,10 +11,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
@@ -26,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -74,26 +77,28 @@ fun InitUX() {
 @Composable
 fun TopBar(navController: NavHostController) {
     TopAppBar(title = {
-        TextButton(
+        TextButton( // Menu Button
             onClick = {
                 navController.navigate(Screen.Menu.route)
             },
         ) {
             Icon(
                 Icons.Default.Menu,
-                "Menu Button"
+                "Menu Button" ,
+                Modifier.size(60.dp)
             )
         }
-        TextButton(
-            onClick = {
-                navController.navigate(Screen.Main.route)
-            },
-        ) {
-            Icon(
-                Icons.Default.List,
-                "Menu Button"
-            )
-        }
+//
+//        TextButton( // History Button
+//            onClick = {
+//                navController.navigate(Screen.Main.route)
+//            },
+//        ) {
+//            Icon(
+//                Icons.Default.DateRange,
+//                "Menu Button"
+//            )
+//        }
     })
 }
 
@@ -101,40 +106,43 @@ fun TopBar(navController: NavHostController) {
 @Composable
 fun BottomBar(navController: NavHostController) {
     BottomAppBar {
-        TextButton(
+        TextButton( // Home button
             onClick = {
                 navController.navigate(Screen.Main.route)
             },
-            Modifier.weight(1f)
+            Modifier.weight(1f).size(60.dp)
 
         ) {
             Icon(
                 Icons.Default.Home,
-                "Home button"
+                "Home button",
+                Modifier.size(60.dp)
             )
         }
 
-        TextButton(
+        TextButton( // Upgrades Button
             onClick = {
                 navController.navigate(Screen.Main.route)
             },
-            Modifier.weight(1f)
+            Modifier.weight(1f).size(60.dp)
         ) {
             Icon(
                 Icons.Default.Build,
-                "Upgrades Button"
+                "Upgrades Button",
+                Modifier.size(60.dp)
             )
         }
 
-        TextButton(
+        TextButton( // Information Button
             onClick = {
                 navController.navigate(Screen.Main.route)
             },
-            Modifier.weight(1f)
+            Modifier.weight(1f).size(65.dp)
         ) {
             Icon(
-                Icons.Default.DateRange,
-                "History button"
+                Icons.Default.Info,
+                "Information button",
+                Modifier.size(65.dp)
             )
         }
     }

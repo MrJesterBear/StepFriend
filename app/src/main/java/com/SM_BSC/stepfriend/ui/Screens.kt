@@ -7,8 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 sealed class Screen (var route: String) {
-    object Main: Screen("main_screen")
-    object Menu: Screen("menu_screen")
+    object Menu: Screen("menu_screen") // Top Left Nav
+    object History: Screen("history_screen") // Top Right Nav
+    object Main: Screen("main_screen") // Bottom Left Nav
+    object Upgrade: Screen("upgrade_screen") // Bottom Middle Nav
+    object Information: Screen("info_screen") // Bottom Right Nav
 
 }
 
