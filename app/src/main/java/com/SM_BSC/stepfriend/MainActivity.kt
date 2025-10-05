@@ -1,16 +1,26 @@
+/**
+ * @author 21005729 / Saul Maylin / MrJesterBear
+ * @since 05/10/2025
+ * @version v1
+ */
+
 package com.SM_BSC.stepfriend
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.SM_BSC.stepfriend.ui.models.MainViewModel
 import com.SM_BSC.stepfriend.ui.theme.StepFriendTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,11 +29,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             StepFriendTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Scaffold { innerPadding ->
+                    InitUX(innerPadding)
                 }
             }
         }
@@ -31,17 +38,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun InitUX(innerPadding: PaddingValues) {
+    val viewModel: MainViewModel = viewModel()
+
+    StepFriendScreen(viewModel)
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    StepFriendTheme {
-        Greeting("Android")
-    }
+fun StepFriendScreen(viewModel: MainViewModel) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 }
