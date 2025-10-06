@@ -110,7 +110,7 @@ fun TopBar(navController: NavHostController) {
 
             TextButton( // History Button
                 onClick = {
-                    navController.navigate(Screen.Main.route)
+                    navController.navigate(Screen.History.route)
                 },
             ) {
                 Icon(

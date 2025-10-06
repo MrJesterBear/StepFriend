@@ -18,24 +18,27 @@ sealed class Screen (var route: String) {
 
 @Composable
 fun MenuScreen(innerPadding: PaddingValues) {
-
+    Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
 @Composable
 fun MainScreen(innerPadding: PaddingValues, viewModel: MainViewModel) {
-    Text(text = "Welcome to the App!", Modifier.padding(innerPadding))
+    Text(text = "The Main Screen", Modifier.padding(innerPadding))
 }
 
 @Composable
 fun HistoryScreen(innerPadding: PaddingValues) {
+    Text(text = "The History Screen", Modifier.padding(innerPadding))
 
 }
 
 @Composable
 fun UpgradeScreen(innerPadding: PaddingValues) {
+    Text(text = "The Game Upgrade Screen", Modifier.padding(innerPadding))
 
 }
 
 @Composable
 fun InformationScreen(innerPadding: PaddingValues) {
+    Text(text = "The Information Screen", Modifier.padding(innerPadding))
 
 }
