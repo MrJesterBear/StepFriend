@@ -10,14 +10,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -92,28 +94,32 @@ fun InitUX() {
 @Composable
 fun TopBar(navController: NavHostController) {
     TopAppBar(title = {
-        TextButton( // Menu Button
-            onClick = {
-                navController.navigate(Screen.Menu.route)
-            },
-        ) {
-            Icon(
-                Icons.Default.Menu,
-                "Menu Button" ,
-                Modifier.size(60.dp)
-            )
+        Row(modifier = Modifier.fillMaxWidth()) { // Row to hold the buttons and space them out.
+            TextButton( // Menu Button
+                onClick = {
+                    navController.navigate(Screen.Menu.route)
+                },
+            ) {
+                Icon(
+                    Icons.Default.Menu,
+                    "Menu Button" ,
+                    Modifier.size(60.dp)
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f)) // Spacer to push the buttons to the edges.
+
+            TextButton( // History Button
+                onClick = {
+                    navController.navigate(Screen.Main.route)
+                },
+            ) {
+                Icon(
+                    Icons.Default.DateRange,
+                    "History Button",
+                    Modifier.size(60.dp)
+                )
+            }
         }
-//
-//        TextButton( // History Button
-//            onClick = {
-//                navController.navigate(Screen.Main.route)
-//            },
-//        ) {
-//            Icon(
-//                Icons.Default.DateRange,
-//                "Menu Button"
-//            )
-//        }
     })
 }
 
