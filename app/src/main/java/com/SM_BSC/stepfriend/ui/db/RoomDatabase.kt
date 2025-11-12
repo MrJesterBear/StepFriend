@@ -21,7 +21,7 @@ import java.util.Date
 // Entity for storing step data per day.
 @Entity
 data class StepsEntity(
-    @PrimaryKey val date: String, // yyyy-mm-dd (for daily tracking)
+    @PrimaryKey var date: String, // yyyy-mm-dd (for daily tracking)
     @ColumnInfo(name = "totalSteps") val totalSteps: Double?, // Total steps constant (currency)
     @ColumnInfo(name = "stepsToday") val stepsToday: Int?, // Total steps taken in a day
     @ColumnInfo(name = "upgradedSteps") val updatedSteps: Double?, // the amount of steps from upgrades
@@ -31,14 +31,17 @@ data class StepsEntity(
 @Dao
 interface RoomDao {
     // New Days
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg steps: StepsEntity)
 
     @Query("SELECT * FROM StepsEntity") // Get all records
     fun getAll(): List<StepsEntity>
 
-    @Query("SELECT * FROM StepsEntity ORDER BY date DESC LIMIT 1") // get today's record
-    fun getToday(): List<StepsEntity>
+    @Query("SELECT * FROM StepsEntity WHERE date = :date LIMIT 1") // get today's record
+    fun getToday(date: String): List<StepsEntity>
+
+    @Query("SELECT * FROM StepsEntity ORDER BY date DESC LIMIT 1")
+    fun getLastRecord(): List<StepsEntity>
 }
 
 @Database(entities = [StepsEntity::class], version = 1)

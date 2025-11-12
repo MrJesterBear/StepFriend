@@ -16,6 +16,7 @@ roomCompiler = "2.8.3"
 roomCommon = "2.8.3"
 roomMigration = "2.8.3"
 roomRuntime = "2.8.3"
+runtimeLivedata = "1.9.4"
 
 [libraries]
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
@@ -42,6 +43,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
 androidx-room-migration = { group = "androidx.room", name = "room-migration", version.ref = "roomMigration" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
+androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
