@@ -1,11 +1,14 @@
 package com.SM_BSC.stepfriend.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.SM_BSC.stepfriend.ui.models.MainViewModel
+import com.SM_BSC.stepfriend.ui.db.StepsEntity
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -20,9 +23,17 @@ sealed class Screen (var route: String) {
 fun MenuScreen(innerPadding: PaddingValues) {
     Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreen(innerPadding: PaddingValues, viewModel: MainViewModel) {
+fun MainScreen(innerPadding: PaddingValues, steps: List<StepsEntity>) {
+
     Text(text = "The Main Screen", Modifier.padding(innerPadding))
+    Column(Modifier.padding(innerPadding)) {
+        steps.forEach { step ->
+            Text(text = step.totalSteps.toString(), Modifier.padding(innerPadding))
+        }
+    }
+
 }
 
 @Composable
