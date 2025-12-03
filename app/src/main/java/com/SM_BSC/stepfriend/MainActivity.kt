@@ -1,11 +1,15 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/10/2025
- * @version v1
+ * @since 03/12/2025
+ * @version v1.1
  */
 
 package com.SM_BSC.stepfriend
 
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,25 +35,35 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.SM_BSC.stepfriend.ui.Screen
 import com.SM_BSC.stepfriend.ui.theme.StepFriendTheme
 import androidx.navigation.compose.composable
+import com.SM_BSC.stepfriend.steps.Steps
 import com.SM_BSC.stepfriend.ui.HistoryScreen
 import com.SM_BSC.stepfriend.ui.InformationScreen
 import com.SM_BSC.stepfriend.ui.MainScreen
 import com.SM_BSC.stepfriend.ui.MenuScreen
 import com.SM_BSC.stepfriend.ui.UpgradeScreen
+import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
 import kotlin.getValue
 
-
+// init class for step counter.
+val stepCounter = Steps()
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,14 +71,84 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
         setContent {
-            InitUX(stepsViewModel)
+            InitAccelerometer(stepsViewModel)
         }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitUX(stepsViewModel: StepViewModel) {
+fun InitAccelerometer(stepsViewModel: StepViewModel) {
+
+    // get composable context.
+    val context = LocalContext.current
+
+    // access sensor
+    val sensorManager = remember {
+        getSystemService(context, SensorManager::class.java)
+    }
+
+    // Remember xyz for updating
+    var x by remember { mutableFloatStateOf(0f)}
+    var y by remember { mutableFloatStateOf(0f)}
+    var z by remember { mutableFloatStateOf(0f)}
+
+    // Declare Steps
+    var steps: Int by remember { mutableIntStateOf(0)}
+
+    // Init the sensor
+    DisposableEffect(Unit) {
+        val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        // Init listener
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                x = event.values[0]
+                y = event.values[1]
+                z = event.values[2]
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        // Attach listener.
+        sensorManager?.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+
+        // Removes when screen closes.
+        onDispose {
+            sensorManager?.unregisterListener(listener)
+        }
+    }
+
+    // Now that a listener has been created, calculate the actual logic.
+    val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+
+    // Set steps to the current steps taken today.
+     stepList.forEach { list ->
+        steps = list.stepsToday!! // Chance to be null.
+    }
+
+    // Calculate the Step.
+    stepCounter.calculateStep(x.toDouble(), y.toDouble(), z.toDouble())
+
+    // Check if a new step was taken
+    if (stepCounter.stepCount > steps) {
+
+        // Update variable and then update rooms.
+        steps = stepCounter.stepCount
+
+        // do Calculations for other variables.
+        // Total Steps (Current steps as currency)
+        // steps today (Steps base taken today)
+        // upgraded steps (step upgraded by the upgrademultiplayer)
+
+    }
+
+    InitUX(stepsViewModel, stepList)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
 
 
 
@@ -78,8 +162,6 @@ fun InitUX(stepsViewModel: StepViewModel) {
             bottomBar = { BottomBar(navController) }
         ) { innerPadding ->
             // Base Default View
-            val steps by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
-
             NavHost(navController = navController, startDestination = Screen.Main.route) {
                 composable(route = Screen.Main.route) { // Main Screen
                     MainScreen(innerPadding, steps)

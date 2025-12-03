@@ -16,6 +16,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.Update
 import java.util.Date
 
 // Entity for storing step data per day.
@@ -42,6 +43,8 @@ interface RoomDao {
 
     @Query("SELECT * FROM StepsEntity ORDER BY date DESC LIMIT 1")
     fun getLastRecord(): List<StepsEntity>
+
+    @Update()
 }
 
 @Database(entities = [StepsEntity::class], version = 1)

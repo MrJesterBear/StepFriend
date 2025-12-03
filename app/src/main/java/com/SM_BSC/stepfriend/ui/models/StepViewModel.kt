@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
@@ -69,8 +70,8 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
                 }
             }
-            // finally update the list.
-            updateList()
+            // finally update the list to be most recent.
+            updateListDay(currentDate)
         }
 
     }
@@ -99,6 +100,17 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     // close database.
     fun closeDB() {
         _db.close()
+    }
+
+    fun updateCurrentStepRecord(totalSteps: Double?, stepsToday: Int?, updatedSteps: Double?) {
+        // get current date
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val currentDate = LocalDate.now().format(formatter);
+
+        // run query
+        viewModelScope.launch(Dispatchers.IO) {
+            _steps.postValue(_dao.updateRecord())
+        }
     }
     
     // when compose clears.
