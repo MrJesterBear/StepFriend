@@ -27,10 +27,15 @@ fun MenuScreen(innerPadding: PaddingValues) {
 @Composable
 fun MainScreen(innerPadding: PaddingValues, steps: List<StepsEntity>) {
 
-    Text(text = "The Main Screen", Modifier.padding(innerPadding))
-    Column(Modifier.padding(innerPadding)) {
+//    Text(text = "The Main Screen", Modifier.padding(innerPadding))
+    Column {
         steps.forEach { step ->
-            Text(text = step.totalSteps.toString(), Modifier.padding(innerPadding))
+            Column (Modifier.padding(innerPadding)) {
+                Text(text = "Total Steps: ${step.totalSteps}")
+                Text(text = "Steps Today: ${step.stepsToday}")
+                Text(text = "Upgraded Steps: ${step.updatedSteps}")
+                Text(text = "Upgrade Percent: ${step.upgradedPercent}")
+            }
         }
     }
 

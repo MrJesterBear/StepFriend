@@ -14,7 +14,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import kotlinx.coroutines.Dispatchers
@@ -69,8 +68,8 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
                 }
             }
-            // finally update the list.
-            updateList()
+            // finally update the list to be most recent.
+            updateListDay(currentDate)
         }
 
     }
@@ -100,7 +99,18 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     fun closeDB() {
         _db.close()
     }
-    
+
+    fun updateCurrentStepRecord(totalSteps: Double?, stepsToday: Int?, updatedSteps: Double?) {
+        // get current date
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val currentDate = LocalDate.now().format(formatter);
+
+        // run query
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.updateRow(totalSteps, stepsToday, updatedSteps, currentDate)
+        }
+    }
+
     // when compose clears.
     override fun onCleared() {
         super.onCleared()
