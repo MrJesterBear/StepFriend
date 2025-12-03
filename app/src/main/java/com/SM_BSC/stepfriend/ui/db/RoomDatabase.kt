@@ -9,15 +9,12 @@ package com.SM_BSC.stepfriend.ui.db
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
-import androidx.room.Update
-import java.util.Date
 
 // Entity for storing step data per day.
 @Entity
@@ -44,7 +41,8 @@ interface RoomDao {
     @Query("SELECT * FROM StepsEntity ORDER BY date DESC LIMIT 1")
     fun getLastRecord(): List<StepsEntity>
 
-    @Update()
+    @Query("UPDATE StepsEntity SET totalSteps = :newTotalSteps, stepsToday = :newStepsToday, upgradedSteps = :newUpdatedSteps WHERE date = :date")
+    fun updateRow(newTotalSteps: Double?, newStepsToday: Int?, newUpdatedSteps: Double?, date: String)
 }
 
 @Database(entities = [StepsEntity::class], version = 1)

@@ -13,9 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import kotlinx.coroutines.Dispatchers
@@ -109,10 +107,10 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
         // run query
         viewModelScope.launch(Dispatchers.IO) {
-            _steps.postValue(_dao.updateRecord())
+            _dao.updateRow(totalSteps, stepsToday, updatedSteps, currentDate)
         }
     }
-    
+
     // when compose clears.
     override fun onCleared() {
         super.onCleared()

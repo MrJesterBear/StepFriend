@@ -60,6 +60,8 @@ import com.SM_BSC.stepfriend.ui.MenuScreen
 import com.SM_BSC.stepfriend.ui.UpgradeScreen
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.getValue
 
 // init class for step counter.
@@ -138,10 +140,43 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
 
         // do Calculations for other variables.
         // Total Steps (Current steps as currency)
-        // steps today (Steps base taken today)
-        // upgraded steps (step upgraded by the upgrademultiplayer)
+        // steps today (Steps base taken today) // This has been gotten already.
+        // updatedSteps steps (step upgraded by the upgradeMultiplier)
+        var totalSteps: Double? = 1.0
+        var updatedSteps: Double? = 1.0
+        var upgradeMultiplier: Double? = 1.0
 
+        // Should only be one in list on init.
+        stepList.forEach { stats ->
+            totalSteps = stats.totalSteps
+            updatedSteps = stats.updatedSteps
+            upgradeMultiplier = stats.upgradedPercent
+
+        }
+
+        // calculate new total steps.
+        val stepsDoneToday = steps
+        val upgradedStep: Double = 1 * upgradeMultiplier!! // 1 as in 1 step. this point can only be gotten to if a step has been taken.
+        val newTotalUpgraded: Double
+
+        if (upgradeMultiplier > 1) {
+            // Actually add the upgraded step to the draw. otherwise, nah, cause it's not been upgraded.
+             newTotalUpgraded = updatedSteps!! + upgradedStep
+        } else {
+             newTotalUpgraded = updatedSteps!!
+        }
+
+        val newTotalOverall: Double = totalSteps!! + upgradedStep
+
+        // With that, update the row and list.
+        stepsViewModel.updateCurrentStepRecord(newTotalOverall, stepsDoneToday, newTotalUpgraded)
     }
+
+    // Get Todays Stats
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val currentDate = LocalDate.now().format(formatter);
+
+    stepsViewModel.updateListDay(currentDate)
 
     InitUX(stepsViewModel, stepList)
 }
