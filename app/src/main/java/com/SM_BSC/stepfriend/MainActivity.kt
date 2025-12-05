@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 03/12/2025
- * @version v1.1
+ * @since 05/12/2025
+ * @version v1.2
  */
 
 package com.SM_BSC.stepfriend
@@ -122,6 +122,8 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
     }
 
     // Now that a listener has been created, calculate the actual logic.
+
+    // Create the lists for steps.
     val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
 
     // Set steps to the current steps taken today.
@@ -185,6 +187,9 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
 @Composable
 fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
 
+    // Create the upgrades and walking list.
+    val upgrades by stepsViewModel.upgradesList.observeAsState()
+    stepsViewModel.updateUpgradesList()
 
 
     // Nav Controller for navigation

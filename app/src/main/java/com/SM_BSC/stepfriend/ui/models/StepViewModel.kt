@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 11/11/2025
- * @version v1
+ * @since 05/12/2025
+ * @version v1,1
  */
 
 package com.SM_BSC.stepfriend.ui.models
@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
+import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -35,6 +36,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     private val _steps = MutableLiveData<List<StepsEntity>>()
     val stepsList: LiveData<List<StepsEntity>> get() = _steps // create the list
 
+    // Upgrade List
+    private val _upgrades = MutableLiveData<List<UpgradesEntity>>()
+
+    val upgradesList: LiveData<List<UpgradesEntity>> get() = _upgrades
+
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
             // https://www.baeldung.com/kotlin/current-date-time
@@ -51,22 +57,23 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
                 // if no last record, set defaults.
                 if (oldData.isEmpty()) {
+                    // This assumes that the app is being opened for the very first time ever. so create everything needed.
                     insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
+
                 } else {
-                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, 5.0, oldData[0].upgradedPercent))
+                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
 
-            } else {
+            } else { // do nothing because  there is a record with a current date...
                 // Get the last record for updating some things.
-                val oldData: List<StepsEntity> = _dao.getLastRecord()
-
-                // if no last record, set defaults.
-                if (oldData.isEmpty()) {
-                    insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
-                } else {
-                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, 5.0, oldData[0].upgradedPercent))
-
-                }
+//                val oldData: List<StepsEntity> = _dao.getLastRecord()
+//
+//                // if no last record, set defaults.
+//                if (oldData.isEmpty()) {
+//                    insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
+//                } else {
+//                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
+//                }
             }
             // finally update the list to be most recent.
             updateListDay(currentDate)
@@ -108,6 +115,20 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         // run query
         viewModelScope.launch(Dispatchers.IO) {
             _dao.updateRow(totalSteps, stepsToday, updatedSteps, currentDate)
+        }
+    }
+
+    fun updateUpgradeQuantity(ID: Int, amount: Int) {
+
+        // Run Query
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.updateUpgrade(amount, ID)
+        }
+    }
+
+    fun updateUpgradesList() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _upgrades.postValue(_dao.getUpgrades())
         }
     }
 
