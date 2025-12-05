@@ -176,7 +176,7 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
 
     // Get Todays Stats
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val currentDate = LocalDate.now().format(formatter);
+    val currentDate = LocalDate.now().format(formatter)
 
     stepsViewModel.updateListDay(currentDate)
 
@@ -213,7 +213,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
                     HistoryScreen(innerPadding)
                 }
                 composable(route = Screen.Upgrade.route) { // Upgrades Screen
-                    UpgradeScreen(innerPadding)
+                    UpgradeScreen(innerPadding, stepsViewModel, upgrades, steps)
                 }
                 composable(route = Screen.Information.route) { // Information Screen
                     InformationScreen(innerPadding)

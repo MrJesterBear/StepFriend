@@ -60,20 +60,17 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     // This assumes that the app is being opened for the very first time ever. so create everything needed.
                     insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
 
+                    // Setup upgrades.
+                    insertUpgrade(UpgradesEntity(1, "Shoe Insoles", "Buy some new Insoles to fill your shoes.", 50.00, 0.25, 0))
+                    insertUpgrade(UpgradesEntity(2, "Sneaker Stocks", "Buy a share of stocks in a random Sneaker Company", 1000.00, 1.00, 0))
+                    insertUpgrade(UpgradesEntity(3, "Protein Bar", "Buy a Nutritious Bar of processed protein!", 3000.00, 4.0, 0))
+                    insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
 
             } else { // do nothing because  there is a record with a current date...
-                // Get the last record for updating some things.
-//                val oldData: List<StepsEntity> = _dao.getLastRecord()
-//
-//                // if no last record, set defaults.
-//                if (oldData.isEmpty()) {
-//                    insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
-//                } else {
-//                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
-//                }
+
             }
             // finally update the list to be most recent.
             updateListDay(currentDate)
@@ -129,6 +126,12 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     fun updateUpgradesList() {
         viewModelScope.launch(Dispatchers.IO) {
             _upgrades.postValue(_dao.getUpgrades())
+        }
+    }
+
+    fun insertUpgrade(upgrade: UpgradesEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.insertUpgrade(upgrade)
         }
     }
 

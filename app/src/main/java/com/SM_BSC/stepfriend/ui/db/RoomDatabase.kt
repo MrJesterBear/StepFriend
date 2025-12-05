@@ -30,17 +30,18 @@ data class StepsEntity(
 // Entity for Upgrades
 @Entity
 data class UpgradesEntity(
-    @PrimaryKey(autoGenerate = true) var upgradeID: Int, // Id of the upgrade (auto generating id)
+    @PrimaryKey var upgradeID: Int, // Id of the upgrade (auto generating id)
     @ColumnInfo(name = "upgradeName") val upgradeName: String, // Name of the upgrade
     @ColumnInfo(name = "upgradeDesc") val upgradeDesc: String, // Description of the upgrade.
     @ColumnInfo(name = "basePrice") val basePrice: Double, // The base price of the upgrade (Measured in steps)
+    @ColumnInfo(name = "percentModifier") val percentModifier: Double,
     @ColumnInfo(name = "quantityOwned") val quantityOwned: Int? // Quantity of the upgrade owned.
 )
 
 // Entity for Walking tracking
 @Entity
 data class WalkEntity(
-    @PrimaryKey(autoGenerate = true) var walkID: Int, //ID of a walk.
+    @PrimaryKey var walkID: Int, //ID of a walk.
     @ColumnInfo(name = "date") var date: String, // Date of walk (foreign key for step class.)
     @ColumnInfo(name = "startingLat") var startLat: Double, //Lat for starting
     @ColumnInfo(name = "StartingLng") var startLng: Double, //Lng for starting
@@ -51,7 +52,7 @@ data class WalkEntity(
 
 @Entity
 data class WaypointEntity(
-    @PrimaryKey(autoGenerate = true) var waypointID: Int, // ID of waypoint
+    @PrimaryKey var waypointID: Int, // ID of waypoint
     @ColumnInfo(name = "walkID") var walkID: Int, // PK/FK for the walk entity.
     @ColumnInfo(name = "waypointLat") var waypointLat: Double,
     @ColumnInfo(name = "waypointLng") var waypointLng: Double,
