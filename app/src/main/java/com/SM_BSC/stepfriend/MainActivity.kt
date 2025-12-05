@@ -64,23 +64,35 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.getValue
 
-// init class for step counter.
-val stepCounter = Steps()
 class MainActivity : ComponentActivity() {
+    // init class for step counter.
+    val stepCounter = Steps()
+    val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
         setContent {
-            InitAccelerometer(stepsViewModel)
+            InitAccelerometer()
         }
     }
-}
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onResume() { // Resu
+        super.onResume()
+        setContent {
+            InitAccelerometer()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onDestroy() {
+        super.onDestroy()
+    }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitAccelerometer(stepsViewModel: StepViewModel) {
+fun InitAccelerometer() {
 
     // get composable context.
     val context = LocalContext.current
@@ -300,6 +312,7 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
+    }
 
 
 /**
