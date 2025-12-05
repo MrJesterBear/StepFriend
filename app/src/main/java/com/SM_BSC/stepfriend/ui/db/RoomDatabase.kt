@@ -85,6 +85,9 @@ interface RoomDao {
         date: String
     )
 
+    @Query("UPDATE StepsEntity SET upgradePercent = :newPercent, totalSteps = :newTotal WHERE date = :date")
+    fun updateStepPercentage(date: String, newPercent: Double, newTotal: Double)
+
     /**
      * UPGRADES ENTITY QUERIES.
      */

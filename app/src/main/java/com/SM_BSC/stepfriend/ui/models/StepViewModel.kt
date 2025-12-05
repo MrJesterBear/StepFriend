@@ -123,6 +123,9 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * UPGRADE METHODS
+     */
     fun updateUpgradeQuantity(ID: Int, amount: Int) {
 
         // Run Query
@@ -143,6 +146,17 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateStepUpgrade(newUpgradePercantage: Double, date: String, newTotal: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.updateStepPercentage(date, newUpgradePercantage, newTotal)
+        }
+    }
+
+
+    /**
+     * OVERRIDDEN METHODS
+     */
+
     // when compose clears.
     override fun onCleared() {
         super.onCleared()
@@ -150,7 +164,6 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
     }
 
-    
 
 
 }
