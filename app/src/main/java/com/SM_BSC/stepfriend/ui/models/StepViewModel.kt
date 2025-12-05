@@ -69,8 +69,16 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
 
-            } else { // do nothing because  there is a record with a current date...
+            } else {
+                // Get the last record for updating some things.
+                val oldData: List<StepsEntity> = _dao.getLastRecord()
 
+                // if no last record, set defaults.
+                if (oldData.isEmpty()) {
+                    insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
+                } else {
+                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, oldData[0].stepsToday, oldData[0].updatedSteps, oldData[0].upgradedPercent))
+                }
             }
             // finally update the list to be most recent.
             updateListDay(currentDate)
@@ -139,5 +147,10 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         closeDB()
+
     }
+
+    
+
+
 }
