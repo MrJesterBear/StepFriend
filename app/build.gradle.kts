@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.room.migration)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

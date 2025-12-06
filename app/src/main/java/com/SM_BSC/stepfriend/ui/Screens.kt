@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.SM_BSC.stepfriend.MainActivity
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
@@ -54,22 +55,49 @@ sealed class Screen (var route: String) {
 fun MenuScreen(innerPadding: PaddingValues) {
     Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreen(innerPadding: PaddingValues, steps: List<StepsEntity>) {
+fun MainScreen(
+    innerPadding: PaddingValues,
+    steps: List<StepsEntity>,
+    stepsViewModel: StepViewModel,
+    activity: MainActivity,
+) {
+// Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
 
-    Column () {
-        steps.forEach { step ->
-            Column (Modifier.padding(innerPadding)) {
-                Text(text = "Total Steps: ${step.totalSteps}")
-                Text(text = "Steps Today: ${step.stepsToday}")
-                Text(text = "Upgraded Steps: ${step.updatedSteps}")
-                Text(text = "Upgrade Percent: ${step.upgradedPercent}")
+    val scope = rememberCoroutineScope() // Get routine info.
+    val snackbarHostState = remember { SnackbarHostState() } // Remember the state of the snackbar.
+
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        floatingActionButton = { // Create the snackbar label using a button.
+            ExtendedFloatingActionButton(
+                text = { Text("Show snackbar") },
+                icon = { Icon(Icons.Filled.Clear, contentDescription = "") },
+                onClick = {// What happens when a snackbar is launched
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Snackbar")
+                    }
+                }
+            )
+        }
+    ) {
+        Column() {
+            steps.forEach { step ->
+                Column(Modifier.padding(innerPadding)) {
+                    Text(text = "Total Steps: ${step.totalSteps}")
+                    Text(text = "Steps Today: ${step.stepsToday}")
+                    Text(text = "Upgraded Steps: ${step.updatedSteps}")
+                    Text(text = "Upgrade Percent: ${step.upgradedPercent}")
+                }
+            }
+
             }
         }
     }
-
-}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

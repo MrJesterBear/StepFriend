@@ -53,6 +53,7 @@ import com.SM_BSC.stepfriend.ui.Screen
 import com.SM_BSC.stepfriend.ui.theme.StepFriendTheme
 import androidx.navigation.compose.composable
 import com.SM_BSC.stepfriend.steps.Steps
+import com.SM_BSC.stepfriend.steps.checkLocationPermissions
 import com.SM_BSC.stepfriend.ui.HistoryScreen
 import com.SM_BSC.stepfriend.ui.InformationScreen
 import com.SM_BSC.stepfriend.ui.MainScreen
@@ -61,6 +62,8 @@ import com.SM_BSC.stepfriend.ui.MenuScreen
 import com.SM_BSC.stepfriend.ui.UpgradeScreen
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.getValue
@@ -69,12 +72,22 @@ class MainActivity : ComponentActivity() {
     // init class for step counter.
     val stepCounter = Steps()
     val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
+    var permissionTick: Boolean = false
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+        // get current context
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        checkLocationPermissions(this)
+        if (checkLocationPermissions(this)) { // Runs again to make sure.
+            permissionTick = true
+        }
+
         setContent {
-            InitAccelerometer()
+            InitAccelerometer(this)
         }
     }
 
@@ -82,7 +95,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() { // Resu
         super.onResume()
         setContent {
-            InitAccelerometer()
+            InitAccelerometer(this)
         }
     }
 
@@ -93,7 +106,7 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitAccelerometer() {
+fun InitAccelerometer(activity: MainActivity) {
 
     // get composable context.
     val context = LocalContext.current
@@ -193,12 +206,12 @@ fun InitAccelerometer() {
 
     stepsViewModel.updateListDay(currentDate)
 
-    InitUX(stepsViewModel, stepList)
+    InitUX(stepsViewModel, stepList, activity)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
+fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: MainActivity) {
 
     // Create the upgrades list.
     val upgrades by stepsViewModel.upgradesList.observeAsState()
@@ -217,7 +230,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
             // Base Default View
             NavHost(navController = navController, startDestination = Screen.Main.route) {
                 composable(route = Screen.Main.route) { // Main Screen
-                    MainScreen(innerPadding, steps)
+                    MainScreen(innerPadding, steps, stepsViewModel, activity)
                 }
                 composable(route = Screen.Menu.route) { // Menu Screen
                     MenuScreen(innerPadding)
@@ -316,7 +329,28 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
-    }
+    // Checks if location permissions are active.
+    // Adapted from: https://sachankapil.medium.com/latest-method-how-to-get-current-location-latitude-and-longitude-in-android-give-support-for-c5132474c864
+    // Comments for understanding.
+
+//    fun checkLocationPermissions(): Boolean {
+//        return if (ActivityCompat.checkSelfPermission(this, // Checks permission to see if it isnt granted
+//                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+//            ActivityCompat.checkSelfPermission(this,
+//                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, // Create a dialog to ask for the permissions.
+//                arrayOf(
+//                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+//                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+//                ),
+//                1 // https://stackoverflow.com/questions/44309857/request-code-for-permissions-in-android - Seems like it's used for more interanl tracking.
+//            )
+//            false // Returns false if the permission is not granted.
+//        } else {
+//            true // Otherwise, it's true!
+//        }
+//    }
+}
 
 
 /**
