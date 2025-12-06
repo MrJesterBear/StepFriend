@@ -142,8 +142,9 @@ fun UpgradeScreen(
         }
     ) {
         // Screen content
-
     Column(Modifier.padding(innerPadding)) {
+        Text(text = "Upgrades", Modifier.padding(7.dp), fontSize = 26.sp)
+
         Column(Modifier.fillMaxSize()) {
             upgrades?.forEach { upgrade ->
                 Column(Modifier.padding(10.dp)) {
