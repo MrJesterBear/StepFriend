@@ -1,5 +1,6 @@
 package com.SM_BSC.stepfriend.ui
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,7 @@ fun HistoryScreen(innerPadding: PaddingValues) {
 
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun UpgradeScreen(
     innerPadding: PaddingValues,
