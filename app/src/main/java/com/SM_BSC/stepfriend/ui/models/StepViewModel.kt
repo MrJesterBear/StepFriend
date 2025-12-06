@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 11/11/2025
- * @version v1
+ * @since 05/12/2025
+ * @version v1,1
  */
 
 package com.SM_BSC.stepfriend.ui.models
@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
+import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -35,6 +36,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     private val _steps = MutableLiveData<List<StepsEntity>>()
     val stepsList: LiveData<List<StepsEntity>> get() = _steps // create the list
 
+    // Upgrade List
+    private val _upgrades = MutableLiveData<List<UpgradesEntity>>()
+
+    val upgradesList: LiveData<List<UpgradesEntity>> get() = _upgrades
+
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
             // https://www.baeldung.com/kotlin/current-date-time
@@ -51,9 +57,16 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
                 // if no last record, set defaults.
                 if (oldData.isEmpty()) {
+                    // This assumes that the app is being opened for the very first time ever. so create everything needed.
                     insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
+
+                    // Setup upgrades.
+                    insertUpgrade(UpgradesEntity(1, "Shoe Insoles", "Buy some new Insoles to fill your shoes.", 50.00, 0.25, 0))
+                    insertUpgrade(UpgradesEntity(2, "Sneaker Stocks", "Buy a share of stocks in a random Sneaker Company", 1000.00, 1.00, 0))
+                    insertUpgrade(UpgradesEntity(3, "Protein Bar", "Buy a Nutritious Bar of processed protein!", 3000.00, 4.0, 0))
+                    insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
                 } else {
-                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, 5.0, oldData[0].upgradedPercent))
+                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
 
             } else {
@@ -64,8 +77,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                 if (oldData.isEmpty()) {
                     insertDay(StepsEntity(currentDate, 0.00, 0, 0.0, 1.0))
                 } else {
-                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, 5.0, oldData[0].upgradedPercent))
-
+                    insertDay(StepsEntity(currentDate, oldData[0].totalSteps, oldData[0].stepsToday, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
             }
             // finally update the list to be most recent.
@@ -111,9 +123,47 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * UPGRADE METHODS
+     */
+    fun updateUpgradeQuantity(ID: Int, amount: Int) {
+
+        // Run Query
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.updateUpgrade(amount, ID)
+        }
+    }
+
+    fun updateUpgradesList() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _upgrades.postValue(_dao.getUpgrades())
+        }
+    }
+
+    fun insertUpgrade(upgrade: UpgradesEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.insertUpgrade(upgrade)
+        }
+    }
+
+    fun updateStepUpgrade(newUpgradePercantage: Double, date: String, newTotal: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _dao.updateStepPercentage(date, newUpgradePercantage, newTotal)
+        }
+    }
+
+
+    /**
+     * OVERRIDDEN METHODS
+     */
+
     // when compose clears.
     override fun onCleared() {
         super.onCleared()
         closeDB()
+
     }
+
+
+
 }

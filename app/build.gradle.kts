@@ -67,4 +67,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material.icons.core)
     ksp(libs.androidx.room.compiler)
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+
 }

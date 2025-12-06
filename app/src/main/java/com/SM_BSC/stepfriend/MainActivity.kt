@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 03/12/2025
- * @version v1.1
+ * @since 05/12/2025
+ * @version v1.2
  */
 
 package com.SM_BSC.stepfriend
@@ -64,23 +64,35 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.getValue
 
-// init class for step counter.
-val stepCounter = Steps()
 class MainActivity : ComponentActivity() {
+    // init class for step counter.
+    val stepCounter = Steps()
+    val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
         setContent {
-            InitAccelerometer(stepsViewModel)
+            InitAccelerometer()
         }
     }
-}
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onResume() { // Resu
+        super.onResume()
+        setContent {
+            InitAccelerometer()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onDestroy() {
+        super.onDestroy()
+    }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitAccelerometer(stepsViewModel: StepViewModel) {
+fun InitAccelerometer() {
 
     // get composable context.
     val context = LocalContext.current
@@ -122,6 +134,8 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
     }
 
     // Now that a listener has been created, calculate the actual logic.
+
+    // Create the lists for steps.
     val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
 
     // Set steps to the current steps taken today.
@@ -174,7 +188,7 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
 
     // Get Todays Stats
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val currentDate = LocalDate.now().format(formatter);
+    val currentDate = LocalDate.now().format(formatter)
 
     stepsViewModel.updateListDay(currentDate)
 
@@ -185,6 +199,9 @@ fun InitAccelerometer(stepsViewModel: StepViewModel) {
 @Composable
 fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
 
+    // Create the upgrades and walking list.
+    val upgrades by stepsViewModel.upgradesList.observeAsState()
+    stepsViewModel.updateUpgradesList()
 
 
     // Nav Controller for navigation
@@ -208,7 +225,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
                     HistoryScreen(innerPadding)
                 }
                 composable(route = Screen.Upgrade.route) { // Upgrades Screen
-                    UpgradeScreen(innerPadding)
+                    UpgradeScreen(innerPadding, stepsViewModel, upgrades, steps)
                 }
                 composable(route = Screen.Information.route) { // Information Screen
                     InformationScreen(innerPadding)
@@ -295,6 +312,7 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
+    }
 
 
 /**

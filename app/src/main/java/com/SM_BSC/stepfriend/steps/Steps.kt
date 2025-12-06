@@ -1,7 +1,7 @@
 /**
  * @author 21005729 Saul Maylin
- * @since 08/09/2025
- * @version v1.0
+ * @since 05/12/2025
+ * @version v1.1
  * Steps Class
  */
 
@@ -48,19 +48,19 @@ class Steps {
 
         // Calculate Magnitude. Square root of x^2 + y^2 + z^2
         val magnitude: Double = sqrt(((x * x) + (y * y) + (z * z)))
-        println("mag = $magnitude")
+//        println("mag = $magnitude")
 
         // Apply Gravity.
         val newMagnitude = magnitude - gravity
-        println("new mag = $newMagnitude")
+//        println("new mag = $newMagnitude")
 
         // Check if the threshold has been crossed.
         if (newMagnitude > threshold) {
-            println("Step detected")
+//            println("Step detected")
 
             // Check if 1000ms has passed since last step to avoid multiple steps being counted.
             if (System.currentTimeMillis() - lastStep > 1000) {
-                println("Step counted")
+//                println("Step counted")
 
                 // update last step time then count step.
                 lastStep = System.currentTimeMillis()
@@ -68,7 +68,7 @@ class Steps {
 
             }
         } else {
-            println("No step detected")
+//            println("No step detected")
         }
     }
 }
