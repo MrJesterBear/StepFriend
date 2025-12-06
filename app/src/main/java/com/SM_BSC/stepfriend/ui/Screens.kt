@@ -138,12 +138,6 @@ fun MainScreen(
                     walkLogic(fusedLocationClient, activity)
                     println("New Lat $lat / Lng $lng")
 
-                    scope.launch {
-                            // There's an issue here. quick, walk that logic again.
-                            walkLogic(fusedLocationClient, activity)
-
-                    }
-
                     // Populate with the new variables.
                     stepsViewModel.insertWalk(lat, lng)
 
