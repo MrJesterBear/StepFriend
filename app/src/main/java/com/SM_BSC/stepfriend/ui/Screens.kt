@@ -82,6 +82,7 @@ fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
 
     Column(Modifier.padding(innerPadding)) {
         Column(Modifier.fillMaxSize()) {
+            Text(text = "History", Modifier.padding(7.dp), fontSize = 26.sp)
             walks?.let {
                 if (it.isEmpty()) {
                     // If empty, display a card with some help text.
