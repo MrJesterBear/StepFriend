@@ -68,6 +68,7 @@ fun HistoryScreen(innerPadding: PaddingValues) {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun UpgradeScreen(
