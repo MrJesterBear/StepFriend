@@ -123,7 +123,7 @@ interface RoomDao {
     fun getWaypoints(ID: Int): List<WaypointEntity>
 
     @Query("UPDATE WalkEntity SET endingLat = :LAT, endingLng = :LNG WHERE walkID = :ID")
-    fun finaliseWalk(LAT: Double, LNG: Double, ID: Int)
+    fun finaliseWalk(LAT: Double, LNG: Double, ID: Int): Int
 
 
 }

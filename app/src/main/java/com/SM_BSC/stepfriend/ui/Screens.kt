@@ -6,9 +6,13 @@
 
 package com.SM_BSC.stepfriend.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.location.Location
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +38,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.SM_BSC.stepfriend.MainActivity
+import com.SM_BSC.stepfriend.steps.checkLocationType
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
+import com.SM_BSC.stepfriend.ui.db.WalkEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Timer
+import kotlin.concurrent.scheduleAtFixedRate
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -55,7 +65,11 @@ sealed class Screen (var route: String) {
 fun MenuScreen(innerPadding: PaddingValues) {
     Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
+var lat: Double = 0.0
+var lng: Double = 0.0
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(
@@ -63,12 +77,19 @@ fun MainScreen(
     steps: List<StepsEntity>,
     stepsViewModel: StepViewModel,
     activity: MainActivity,
+    fusedLocationClient: FusedLocationProviderClient,
+    walkList: List<WalkEntity>?,
 ) {
 // Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
-
     val scope = rememberCoroutineScope() // Get routine info.
     val snackbarHostState = remember { SnackbarHostState() } // Remember the state of the snackbar.
+    var buttonChoice: Boolean =  false
 
+    var timer: Timer = Timer("GeolocationTask", false)
+    var timerCanceled: Boolean = false
+
+
+    // Create viewmodel for walks
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -95,9 +116,113 @@ fun MainScreen(
                 }
             }
 
+            Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
+                if (!buttonChoice) {
+                    // Check here to ensure that location has been enabled.
+
+                    // Button has not been pressed yet, start the walk logic
+                    buttonChoice = true
+                    print("Button should now be true as starting timer: $buttonChoice")
+
+
+                    // Update Button Text.
+//                    walkText = mutableStateOf("Stop your Walk")
+//                    walkSubText = mutableStateOf("Stopping will create a new record for your history.")
+                    if (timerCanceled) {
+                        timer = Timer("GeolocationTask", false)
+                        timerCanceled = true
+                    }
+
+                    println("old Lat $lat / Lng $lng")
+                    // Create a walk by running the logic once.
+                    walkLogic(fusedLocationClient, activity)
+                    println("New Lat $lat / Lng $lng")
+
+                    scope.launch {
+                            // There's an issue here. quick, walk that logic again.
+                            walkLogic(fusedLocationClient, activity)
+
+                    }
+
+                    // Populate with the new variables.
+                    stepsViewModel.insertWalk(lat, lng)
+
+                    // Get the most recent ID
+                    stepsViewModel.updateWalks()
+                    println("New WalkID ${walkList!![0].walkID}")
+
+                    // Start the timer task. https://stackoverflow.com/questions/43348623/how-to-call-a-function-after-delay-in-kotlin
+                    timer.scheduleAtFixedRate(500, 5000) { // After 30 second increments, run this method.
+                        println("old Lat $lat / Lng $lng")
+                        walkLogic(fusedLocationClient, activity)
+                        println("New Lat $lat / Lng $lng")
+//                            stepsViewModel.insertWaypoint(walkList!![0].walkID,lat, lng)
+                    }
+
+//
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Walk Started")
+                    }
+                } else {
+                    // Button has been pressed, so clean up.
+                    buttonChoice = false
+
+                    println("Button should now be false as cancelling timer: $buttonChoice")
+
+                    // Update Text
+//                    walkText = mutableStateOf("Start your Walk")
+//                    walkSubText = mutableStateOf("(Requires Location Permissions)")
+
+                    // Stop Timer and do a final geolocation call.
+                    timer.cancel()
+                    timerCanceled = true
+
+                    // Get the final details.
+                    walkLogic(fusedLocationClient, activity)
+                    stepsViewModel.updateWalks()
+
+                    stepsViewModel.finishWalk(walkList!![0].walkID, lat, lng)
+
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Walk Finished.")
+                    }
+                }
+            }) {
+
+                Text(text = "Start Walk", fontSize = 26.sp)
+                Text(text = "(Requires Location Permissions)", fontSize = 16.sp)
+            }
+
             }
         }
     }
+
+@RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+fun walkLogic(fusedLocationClient: FusedLocationProviderClient, activity: MainActivity) {
+
+    val priority = checkLocationType(activity)
+    fusedLocationClient.getCurrentLocation(
+        priority,
+        CancellationTokenSource().token
+    )
+        .addOnSuccessListener { location: Location? ->
+            if (location == null)
+                Toast.makeText(activity, "Cannot get location.", Toast.LENGTH_SHORT).show()
+            else {
+                val lat = location.latitude
+                val lng = location.longitude
+//                println("Lat: $lat , Long: $lng")
+                setLatAndLng(lat, lng)
+            }
+
+        }
+
+}
+
+fun setLatAndLng(newLat: Double, newLng: Double) {
+    lat = newLat
+    lng = newLng
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -120,8 +245,12 @@ fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
                     }
                 } else {
                     walks?.forEach { walk ->
-                        Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {}) {
+                        Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
 
+                        }) {
+                            Text(text = "Your walk on: ${walk.date} - (Walk ${walk.walkID})", fontSize = 16.sp)
+                            Text(text = "Start Coords: ${walk.startLat},${walk.startLng}")
+                            Text(text = "End Coords: ${walk.endLat},${walk.endLng}")
                         }
 
                     }

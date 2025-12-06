@@ -75,6 +75,13 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertUpgrade(UpgradesEntity(2, "Sneaker Stocks", "Buy a share of stocks in a random Sneaker Company", 1000.00, 1.00, 0))
                     insertUpgrade(UpgradesEntity(3, "Protein Bar", "Buy a Nutritious Bar of processed protein!", 3000.00, 4.0, 0))
                     insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
+
+                    // DummyData
+                    insertWalk(57.567434, -4.037932)
+                    insertWaypoint(1, 57.568807, -4.038641)
+                    insertWaypoint(1, 57.570257, -4.039607)
+                    finishWalk(1, 57.571983, -4.041130)
+
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
@@ -180,9 +187,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
             if (oldData.isEmpty()) {
                 // Make the ID 1.
+                println("\nNO DATA FOUND FOR INSERT WALK, ID IS 1.\n")
                 ID = 1
 
             } else {
+                println("\nID FOUND, INCREMENTING THE ID.\n")
                  ID = oldData[0].walkID + 1 // Last ID + 1
             }
 
@@ -195,14 +204,14 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun finishWalk(Lat: Double, Lng: Double) {
+    fun finishWalk(walkID: Int, Lat: Double, Lng: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Get the ID of the last walk.
-            val oldData: List<WalkEntity> = _dao.getWalks()
-            var ID = oldData[0].walkID // Selects from Descending, so first index will be last walk.
-
+            println("FINISHING WALK $walkID WITH $Lat,$Lng")
             // Post data.
-            _dao.finaliseWalk(Lat, Lng, ID)
+            if(_dao.finaliseWalk(Lat, Lng, walkID) != 1) {
+                // do it again. just to make sure.
+                println("\n" + _dao.finaliseWalk(Lat, Lng, walkID))
+            }
         }
     }
 

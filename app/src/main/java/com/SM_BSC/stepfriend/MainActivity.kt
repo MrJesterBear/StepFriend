@@ -74,12 +74,16 @@ class MainActivity : ComponentActivity() {
     val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
     var permissionTick: Boolean = false
 
+    lateinit var fusedLocationClient: FusedLocationProviderClient
+
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         // get current context
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         checkLocationPermissions(this)
         if (checkLocationPermissions(this)) { // Runs again to make sure.
@@ -217,6 +221,17 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: Ma
     val upgrades by stepsViewModel.upgradesList.observeAsState()
     stepsViewModel.updateUpgradesList()
 
+    // Create walk list
+    val walkList by stepsViewModel.walkList.observeAsState()
+    stepsViewModel.updateWalks()
+
+    walkList?.forEach { walk ->
+        println("Walk: ${walk.walkID} " +
+                "\nDate: ${walk.date} \n" +
+                "Starting Coords: ${walk.startLat},${walk.startLng} \n" +
+                "Ending Coords: ${walk.endLat},${walk.endLng}")
+    }
+
 
     // Nav Controller for navigation
     val navController = rememberNavController()
@@ -230,7 +245,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: Ma
             // Base Default View
             NavHost(navController = navController, startDestination = Screen.Main.route) {
                 composable(route = Screen.Main.route) { // Main Screen
-                    MainScreen(innerPadding, steps, stepsViewModel, activity)
+                    MainScreen(innerPadding, steps, stepsViewModel, activity, fusedLocationClient, walkList)
                 }
                 composable(route = Screen.Menu.route) { // Menu Screen
                     MenuScreen(innerPadding)
