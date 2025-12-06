@@ -8,9 +8,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -18,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -64,11 +74,39 @@ fun UpgradeScreen(
     upgrades: List<UpgradesEntity>?,
     steps: List<StepsEntity>
 ) {
+// Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
+
+    val scope = rememberCoroutineScope() // Get routine info.
+    val snackbarHostState = remember { SnackbarHostState() } // Remember the state of the snackbar.
+
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        floatingActionButton = { // Create the snackbar label using a button.
+            ExtendedFloatingActionButton(
+                text = { Text("Show snackbar") },
+                icon = { Icon(Icons.Filled.Clear, contentDescription = "") },
+                onClick = {// What happens when a snackbar is launched
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Snackbar")
+                    }
+                }
+            )
+        }
+    ) {
+        // Screen content
+
     Column(Modifier.padding(innerPadding)) {
         Column(Modifier.fillMaxSize()) {
             upgrades?.forEach { upgrade ->
                 Column(Modifier.padding(10.dp)) {
-                    Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = { buyUpgrade(upgrade.upgradeID, upgrade.basePrice, upgrade.quantityOwned, upgrades, steps, stepsViewModel) }) {
+                    Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
+                        scope.launch { // run this function when the card is clicked.
+                            buyUpgrade(upgrade.upgradeID, upgrade.basePrice, upgrade.quantityOwned, upgrades, steps, stepsViewModel, snackbarHostState)
+                        }
+                    }
+                    ) {
                         Text (text = upgrade.upgradeName, fontSize = 16.sp) // Header
                         Text (text = upgrade.upgradeDesc, fontSize = 12.sp) // Description
 
@@ -77,7 +115,7 @@ fun UpgradeScreen(
                         if (upgrade.quantityOwned == 0) {
                             multiplier = 1
                         } else {
-                            multiplier = upgrade.quantityOwned!!
+                            multiplier = upgrade.quantityOwned!! + 1
                         }
 
                         var total: Double = upgrade.basePrice * multiplier
@@ -94,18 +132,20 @@ fun UpgradeScreen(
         }
 
     }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun buyUpgrade(
+suspend fun buyUpgrade(
     ID: Int,
     price: Double,
     quantityOwned: Int?,
     upgrades: List<UpgradesEntity>,
     steps: List<StepsEntity>,
-    stepsViewModel: StepViewModel
+    stepsViewModel: StepViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
-    println("hehe this has been pressed: $ID" )
+//    println("hehe this has been pressed: $ID" )
 
     // Check to see if can be afforded.
     var pos: Int = ID - 1
@@ -115,7 +155,7 @@ fun buyUpgrade(
     if (quantityOwned == 0) {
         multiplier = 1
     } else {
-        multiplier = quantityOwned!!
+        multiplier = quantityOwned!! + 1
     }
 
     // total price needed.
@@ -143,9 +183,17 @@ fun buyUpgrade(
         stepsViewModel.updateListDay(currentDate)
         stepsViewModel.updateUpgradesList()
 
+        // Show a snackbar message.
+        var upgradeName = upgrades[0].upgradeName
+        snackbarHostState.showSnackbar("You bought a $upgradeName.")
 
-    } else {
-        // Let user know they couldn't purchase it.
+
+
+    } else { // Whoops, sorry pal, nae upgrade for you.
+        // Call the snackbar button with a message.
+        snackbarHostState.showSnackbar("You do not have enough Steps.")
+
+
     }
 
 }
