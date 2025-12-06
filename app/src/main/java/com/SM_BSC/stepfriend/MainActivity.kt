@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v1.2
+ * @since 06/12/2025
+ * @version v1.3
  */
 
 package com.SM_BSC.stepfriend
@@ -56,6 +56,7 @@ import com.SM_BSC.stepfriend.steps.Steps
 import com.SM_BSC.stepfriend.ui.HistoryScreen
 import com.SM_BSC.stepfriend.ui.InformationScreen
 import com.SM_BSC.stepfriend.ui.MainScreen
+import com.SM_BSC.stepfriend.ui.MapScreen
 import com.SM_BSC.stepfriend.ui.MenuScreen
 import com.SM_BSC.stepfriend.ui.UpgradeScreen
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
@@ -199,7 +200,7 @@ fun InitAccelerometer() {
 @Composable
 fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
 
-    // Create the upgrades and walking list.
+    // Create the upgrades list.
     val upgrades by stepsViewModel.upgradesList.observeAsState()
     stepsViewModel.updateUpgradesList()
 
@@ -222,7 +223,10 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
                     MenuScreen(innerPadding)
                 }
                 composable(route = Screen.History.route) { // History Screen
-                    HistoryScreen(innerPadding)
+                    HistoryScreen(innerPadding, stepsViewModel)
+                }
+                composable(route = Screen.Map.route) {
+                    MapScreen(innerPadding)
                 }
                 composable(route = Screen.Upgrade.route) { // Upgrades Screen
                     UpgradeScreen(innerPadding, stepsViewModel, upgrades, steps)

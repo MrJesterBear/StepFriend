@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v1,1
+ * @since 06/12/2025
+ * @version v1.2
  */
 
 package com.SM_BSC.stepfriend.ui.models
@@ -17,6 +17,8 @@ import androidx.room.Room
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
+import com.SM_BSC.stepfriend.ui.db.WalkEntity
+import com.SM_BSC.stepfriend.ui.db.WaypointEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -40,6 +42,14 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     private val _upgrades = MutableLiveData<List<UpgradesEntity>>()
 
     val upgradesList: LiveData<List<UpgradesEntity>> get() = _upgrades
+
+    // Walk List
+    private val _walk = MutableLiveData<List<WalkEntity>>()
+    val walkList: LiveData<List<WalkEntity>> get() = _walk
+
+    // Waypoint List
+    private val _waypoint = MutableLiveData<List<WaypointEntity>>()
+    val waypointList: LiveData<List<WaypointEntity>> get() = _waypoint
 
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
@@ -149,6 +159,76 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     fun updateStepUpgrade(newUpgradePercantage: Double, date: String, newTotal: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             _dao.updateStepPercentage(date, newUpgradePercantage, newTotal)
+        }
+    }
+
+    /**
+     * Walk / Waypoint Methods
+     */
+    fun updateWalks() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _walk.postValue(_dao.getWalks())
+        }
+    }
+
+    fun insertWalk(Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            // Get Last ID.
+            val oldData: List<WalkEntity> = _dao.getWalks()
+            var ID: Int
+
+            if (oldData.isEmpty()) {
+                // Make the ID 1.
+                ID = 1
+
+            } else {
+                 ID = oldData[0].walkID + 1 // Last ID + 1
+            }
+
+            // get current date
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            val currentDate = LocalDate.now().format(formatter);
+
+            // Post
+            _dao.insertWalk(WalkEntity(ID, currentDate, Lat, Lng, null, null))
+        }
+    }
+
+    fun finishWalk(Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Get the ID of the last walk.
+            val oldData: List<WalkEntity> = _dao.getWalks()
+            var ID = oldData[0].walkID // Selects from Descending, so first index will be last walk.
+
+            // Post data.
+            _dao.finaliseWalk(Lat, Lng, ID)
+        }
+    }
+
+    fun updateWaypoints(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _waypoint.postValue(_dao.getWaypoints(walkID))
+        }
+    }
+
+    fun insertWaypoint(walkID: Int, Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            // Get Last ID from Waypoints.
+            val oldData: List<WaypointEntity> = _dao.getWaypoints(walkID)
+            var waypointID: Int
+
+            if (oldData.isEmpty()) {
+                // Make the ID 1.
+                waypointID = 1
+
+            } else {
+                waypointID = oldData[0].waypointID + 1 // Last ID + 1
+            }
+
+            // Post Data
+            _dao.insertWaypoint(WaypointEntity(waypointID, walkID, Lat, Lng))
         }
     }
 

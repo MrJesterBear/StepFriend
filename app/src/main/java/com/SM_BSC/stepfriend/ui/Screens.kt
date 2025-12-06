@@ -1,3 +1,9 @@
+/**
+ * @author 21005729 / Saul Maylin / MrJesterBear
+ * @since 06/12/2025
+ * @version v2.1
+ */
+
 package com.SM_BSC.stepfriend.ui
 
 import android.annotation.SuppressLint
@@ -19,6 +25,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -35,6 +43,7 @@ import java.time.format.DateTimeFormatter
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
     object History: Screen("history_screen") // Top Right Nav
+    object Map: Screen("map_screen") // History Screen
     object Main: Screen("main_screen") // Bottom Left Nav
     object Upgrade: Screen("upgrade_screen") // Bottom Middle Nav
     object Information: Screen("info_screen") // Bottom Right Nav
@@ -62,9 +71,42 @@ fun MainScreen(innerPadding: PaddingValues, steps: List<StepsEntity>) {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HistoryScreen(innerPadding: PaddingValues) {
-    Text(text = "The History Screen", Modifier.padding(innerPadding))
+fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
+//    Text(text = "The History Screen", Modifier.padding(innerPadding))
+
+//    Create Cards for the last 4 walks
+    val walks by stepsViewModel.walkList.observeAsState()
+    stepsViewModel.updateWalks()
+
+    Column(Modifier.padding(innerPadding)) {
+        Column(Modifier.fillMaxSize()) {
+            walks?.let {
+                if (it.isEmpty()) {
+                    // If empty, display a card with some help text.
+                    Card(modifier = Modifier.size(width = 500.dp, height = 100.dp)) {
+                        Text(text = "You have no walking History", fontSize = 16.sp)
+                        Text(text = "If you would like to start a walk, click the Start Walk button on the main game screen.", fontSize = 12.sp)
+                    }
+                } else {
+                    walks?.forEach { walk ->
+                        Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {}) {
+
+                        }
+
+                    }
+                }
+            }
+
+        }
+
+    }
+
+}
+
+@Composable
+fun MapScreen(innerPadding: PaddingValues) {
 
 }
 

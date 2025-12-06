@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v2
+ * @since 06/12/2025
+ * @version v2.1
  */
 
 package com.SM_BSC.stepfriend.ui.db
@@ -45,8 +45,8 @@ data class WalkEntity(
     @ColumnInfo(name = "date") var date: String, // Date of walk (foreign key for step class.)
     @ColumnInfo(name = "startingLat") var startLat: Double, //Lat for starting
     @ColumnInfo(name = "StartingLng") var startLng: Double, //Lng for starting
-    @ColumnInfo(name = "endingLat") var endLat: Double,
-    @ColumnInfo(name = "endingLng") var endLng: Double,
+    @ColumnInfo(name = "endingLat") var endLat: Double?,
+    @ColumnInfo(name = "endingLng") var endLng: Double?,
 
     )
 
@@ -103,6 +103,28 @@ interface RoomDao {
     // Get all Upgrades.
     @Query("SELECT * FROM UpgradesEntity")
     fun getUpgrades(): List<UpgradesEntity>
+
+    /**
+     * WALKS / WAYPOINT QUERIES
+     */
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWalk(vararg walks: WalkEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWaypoint(vararg waypoint: WaypointEntity)
+
+    @Query("SELECT * FROM WalkEntity ORDER BY walkID DESC LIMIT 4") // Last 4 walks.
+    fun getWalks(): List<WalkEntity>
+
+
+
+    @Query("SELECT * FROM WaypointEntity WHERE walkID = :ID")
+    fun getWaypoints(ID: Int): List<WaypointEntity>
+
+    @Query("UPDATE WalkEntity SET endingLat = :LAT, endingLng = :LNG WHERE walkID = :ID")
+    fun finaliseWalk(LAT: Double, LNG: Double, ID: Int)
+
 
 }
 
