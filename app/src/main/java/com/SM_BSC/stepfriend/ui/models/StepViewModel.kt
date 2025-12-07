@@ -89,6 +89,12 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertWaypoint(1, 57.570257, -4.039607)
                     finishWalk(1, 57.571983, -4.041130)
 
+//                    // DummyData2
+//                    insertWalk(57.567434, -4.037932)
+//                    insertWaypoint(2, 57.568807, -4.038641)
+//                    insertWaypoint(2, 57.570257, -4.039607)
+//                    finishWalk(2, 57.571983, -4.041130)
+
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }

@@ -223,7 +223,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: Ma
     val walkList by stepsViewModel.walkList.observeAsState()
     stepsViewModel.updateWalks()
 
-    // DEBUG
+    // test print outs
     walkList?.forEach { walk ->
         println("Walk: ${walk.walkID} " +
                 "\nDate: ${walk.date} \n" +
