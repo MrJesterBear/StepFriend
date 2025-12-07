@@ -84,16 +84,18 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
 
                     // DummyData
-                    insertWalk(57.567434, -4.037932)
+                    insertWalk(0,57.567434, -4.037932)
                     insertWaypoint(1, 57.568807, -4.038641)
                     insertWaypoint(1, 57.570257, -4.039607)
                     finishWalk(1, 57.571983, -4.041130)
 
 //                    // DummyData2
-//                    insertWalk(57.567434, -4.037932)
-//                    insertWaypoint(2, 57.568807, -4.038641)
-//                    insertWaypoint(2, 57.570257, -4.039607)
-//                    finishWalk(2, 57.571983, -4.041130)
+                    insertWalk(1,57.472663, -4.194736)
+                    insertWaypoint(2, 57.473205, -4.200456)
+                    insertWaypoint(2, 57.472895, -4.208405)
+                    insertWaypoint(2, 57.470399, -4.212899)
+                    insertWaypoint(2, 57.468421, -4.213652)
+                    finishWalk(2, 57.466014, -4.210810)
 
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
@@ -191,29 +193,17 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun insertWalk(Lat: Double, Lng: Double) {
+    fun insertWalk(oldWalkID: Int, Lat: Double, Lng: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-
-            // Get Last ID.
-            val oldData: List<WalkEntity> = _dao.getWalks()
-            var ID: Int
-
-            if (oldData.isEmpty()) {
-                // Make the ID 1.
-                println("\nNO DATA FOUND FOR INSERT WALK, ID IS 1.\n")
-                ID = 1
-
-            } else {
-                println("\nID FOUND, INCREMENTING THE ID.\n")
-                 ID = oldData[0].walkID + 1 // Last ID + 1
-            }
+            // Assumes the walkID is the old ID, so increment by 1.
+            var newID: Int = oldWalkID + 1
 
             // get current date
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             val currentDate = LocalDate.now().format(formatter);
 
             // Post
-            _dao.insertWalk(WalkEntity(ID, currentDate, Lat, Lng, null, null))
+            _dao.insertWalk(WalkEntity(newID, currentDate, Lat, Lng, null, null))
         }
     }
 

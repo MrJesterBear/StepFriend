@@ -53,6 +53,7 @@ import com.google.android.gms.common.util.CollectionUtils.listOf
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -61,6 +62,8 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -72,6 +75,7 @@ var lat: Double = 0.0
 var lng: Double = 0.0
 
 var mapID: Int = 0
+var walkID: Int = 0
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -158,7 +162,7 @@ fun MainScreen(
                     println("New Lat $lat / Lng $lng")
 
                     // Populate with the new variables.
-                    stepsViewModel.insertWalk(lat, lng)
+                    stepsViewModel.insertWalk(walkID,lat, lng)
 
                     // Get the most recent ID
                     stepsViewModel.updateWalks()
@@ -297,8 +301,9 @@ fun MapScreen(
     // Comments for Understanding.
 
     // Get the requires lists (walks and Waypoints.
-    val walkList by stepsViewModel.walkList.observeAsState()
-    val waypointList by stepsViewModel.waypointList.observeAsState()
+
+    val walkList by stepsViewModel.mapWalkList.observeAsState()
+    val waypointList by stepsViewModel.mapWaypointList.observeAsState()
 
     // Update each list based on the walkID that is saved by clicking the card in the history.
     stepsViewModel.getWaypointDetails(mapID)
@@ -313,6 +318,8 @@ fun MapScreen(
         endingCoords = LatLng(walk.endLat!!, walk.endLng!!)
     }
 
+    println("MapID : $mapID")
+    println("StartingCoords: $startingCoords")
 
     val targetPos = startingCoords // Target Position will be the start location.
     val cameraPositionState = rememberCameraPositionState {
@@ -323,22 +330,18 @@ fun MapScreen(
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
 
-    var waypointCoordinates: MutableList<LatLng> = listOf (
 
-    )
 
-    // add to the list.
-    waypointList?.forEach { waypoint ->
-        println("Adding ${waypoint.waypointLat},${waypoint.waypointLng}")
-        waypointCoordinates += LatLng(waypoint.waypointLat, waypoint.waypointLng)
-    }
-
-    // Create a list of waypoints for creating a route.
+//     Create a list of waypoints for creating a route.
     var routeCoordinates: List<LatLng> = listOf(
         startingCoords, // Starting Position
-        // Waypoints in here.
+        waypointList?.forEach { waypoint ->
+            LatLng(waypoint.waypointLat, waypoint.waypointLng)
+        },// Waypoints in here.
         endingCoords // Ending Position
-    )
+    ) as List<LatLng>
+
+    var newCoordinates: List<LatLng> = routeCoordinates
 
     Column(Modifier.padding(innerPadding)) {
 
@@ -353,7 +356,7 @@ fun MapScreen(
             properties = properties
         ) {
             Polyline( // Polyline designs the line with each point, useful for tracking directional changes.
-                points = routeCoordinates,
+                points = newCoordinates,
                 color = Color.Red,
                 width = 5f
             )
