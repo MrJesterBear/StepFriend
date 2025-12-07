@@ -126,6 +126,12 @@ interface RoomDao {
     fun finaliseWalk(LAT: Double, LNG: Double, ID: Int): Int
 
 
+    /**
+     * MAP SPECIFIC QUERIES
+     */
+
+    @Query("SELECT * FROM WalkEntity WHERE walkID = :ID")
+    fun getMapWalk(ID: Int) : List<WalkEntity>
 }
 
 @Database(

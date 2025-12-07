@@ -51,6 +51,13 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     private val _waypoint = MutableLiveData<List<WaypointEntity>>()
     val waypointList: LiveData<List<WaypointEntity>> get() = _waypoint
 
+    // Waypoint and Walk list just for maps as to not interrupt location features..
+    private val _mapWalk = MutableLiveData<List<WalkEntity>>()
+     val mapWalkList: LiveData<List<WalkEntity>> get() = _mapWalk
+
+    private val _mapWaypoint = MutableLiveData<List<WaypointEntity>>()
+     val mapWaypointList: LiveData<List<WaypointEntity>> get() = _mapWaypoint
+
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
             // https://www.baeldung.com/kotlin/current-date-time
@@ -241,6 +248,21 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * MAP SPECIFIC FUNCTIONS.
+     */
+    
+    fun getWalkDetails(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _mapWalk.postValue(_dao.getMapWalk(walkID))            
+        }
+    }
+    
+    fun getWaypointDetails(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO){ 
+            _mapWaypoint.postValue(_dao.getWaypoints(walkID))
+        }
+    }
 
     /**
      * OVERRIDDEN METHODS

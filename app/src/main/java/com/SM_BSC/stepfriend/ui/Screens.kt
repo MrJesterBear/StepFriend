@@ -15,12 +15,14 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,25 +33,45 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.SM_BSC.stepfriend.MainActivity
 import com.SM_BSC.stepfriend.steps.checkLocationType
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
 import com.SM_BSC.stepfriend.ui.db.WalkEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import com.google.android.gms.common.util.CollectionUtils.listOf
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Timer
 import kotlin.concurrent.scheduleAtFixedRate
+
+// Global Variables for usage.
+var lat: Double = 0.0
+var lng: Double = 0.0
+
+var mapID: Int = 0
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -65,9 +87,6 @@ sealed class Screen (var route: String) {
 fun MenuScreen(innerPadding: PaddingValues) {
     Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
-
-var lat: Double = 0.0
-var lng: Double = 0.0
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -220,7 +239,11 @@ fun setLatAndLng(newLat: Double, newLng: Double) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
+fun HistoryScreen(
+    innerPadding: PaddingValues,
+    stepsViewModel: StepViewModel,
+    navController: NavHostController
+) {
 //    Text(text = "The History Screen", Modifier.padding(innerPadding))
 
 //    Create Cards for the last 4 walks
@@ -240,7 +263,12 @@ fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
                 } else {
                     walks?.forEach { walk ->
                         Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
-
+                              mapID = walk.walkID
+                            
+                            // PUt the walk ID to the main activity.
+                            
+                            // Route to the map screen.
+                            navController.navigate(Screen.Map.route)
                         }) {
                             Text(text = "Your walk on: ${walk.date} - (Walk ${walk.walkID})", fontSize = 16.sp)
                             Text(text = "Start Coords: ${walk.startLat},${walk.startLng}")
@@ -257,9 +285,88 @@ fun HistoryScreen(innerPadding: PaddingValues, stepsViewModel: StepViewModel) {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MapScreen(innerPadding: PaddingValues) {
+fun MapScreen(
+    innerPadding: PaddingValues,
+    stepsViewModel: StepViewModel,
+    navController: NavHostController
+) {
 
+    // Adapted from: https://medium.com/@ridvanozcan48/how-to-use-google-maps-in-jetpack-compose-step-by-step-android-guide-55aedac89e43
+    // Comments for Understanding.
+
+    // Get the requires lists (walks and Waypoints.
+    val walkList by stepsViewModel.walkList.observeAsState()
+    val waypointList by stepsViewModel.waypointList.observeAsState()
+
+    // Update each list based on the walkID that is saved by clicking the card in the history.
+    stepsViewModel.getWaypointDetails(mapID)
+    stepsViewModel.getWalkDetails(mapID)
+
+    // Store important walk information
+    var startingCoords: LatLng = LatLng(0.0, 0.0)
+    var endingCoords: LatLng = LatLng(0.0, 0.0)
+
+    walkList?.forEach { walk ->
+        startingCoords = LatLng(walk.startLat, walk.startLng)
+        endingCoords = LatLng(walk.endLat!!, walk.endLng!!)
+    }
+
+
+    val targetPos = startingCoords // Target Position will be the start location.
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(targetPos, 15f)
+    }
+
+    var properties by remember {
+        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
+    }
+
+    var waypointCoordinates: MutableList<LatLng> = listOf (
+
+    )
+
+    // add to the list.
+    waypointList?.forEach { waypoint ->
+        println("Adding ${waypoint.waypointLat},${waypoint.waypointLng}")
+        waypointCoordinates += LatLng(waypoint.waypointLat, waypoint.waypointLng)
+    }
+
+    // Create a list of waypoints for creating a route.
+    var routeCoordinates: List<LatLng> = listOf(
+        startingCoords, // Starting Position
+        // Waypoints in here.
+        endingCoords // Ending Position
+    )
+
+    Column(Modifier.padding(innerPadding)) {
+
+        Button(onClick = { // Brings back to history menu.
+            navController.navigate(Screen.History.route)
+        }) {
+            Text(text = "Go Back")
+        }
+
+        GoogleMap( // Call the google map composable to display the map with the information needed.
+            cameraPositionState = cameraPositionState,
+            properties = properties
+        ) {
+            Polyline( // Polyline designs the line with each point, useful for tracking directional changes.
+                points = routeCoordinates,
+                color = Color.Red,
+                width = 5f
+            )
+            Marker( // Displays a marker at a position, one for starting position and another for the ending position.
+                state = MarkerState(position = startingCoords),
+                title = "Start Position"
+            )
+            Marker(
+                state = MarkerState(position = endingCoords),
+                title = "End Position"
+            )
+        }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)

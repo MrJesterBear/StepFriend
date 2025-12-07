@@ -76,8 +76,6 @@ class MainActivity : ComponentActivity() {
 
     lateinit var fusedLocationClient: FusedLocationProviderClient
 
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         // get current context
@@ -225,6 +223,7 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: Ma
     val walkList by stepsViewModel.walkList.observeAsState()
     stepsViewModel.updateWalks()
 
+    // DEBUG
     walkList?.forEach { walk ->
         println("Walk: ${walk.walkID} " +
                 "\nDate: ${walk.date} \n" +
@@ -251,10 +250,10 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: Ma
                     MenuScreen(innerPadding)
                 }
                 composable(route = Screen.History.route) { // History Screen
-                    HistoryScreen(innerPadding, stepsViewModel)
+                    HistoryScreen(innerPadding, stepsViewModel, navController)
                 }
                 composable(route = Screen.Map.route) {
-                    MapScreen(innerPadding)
+                    MapScreen(innerPadding, stepsViewModel, navController)
                 }
                 composable(route = Screen.Upgrade.route) { // Upgrades Screen
                     UpgradeScreen(innerPadding, stepsViewModel, upgrades, steps)
@@ -344,35 +343,5 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
-    // Checks if location permissions are active.
-    // Adapted from: https://sachankapil.medium.com/latest-method-how-to-get-current-location-latitude-and-longitude-in-android-give-support-for-c5132474c864
-    // Comments for understanding.
 
-//    fun checkLocationPermissions(): Boolean {
-//        return if (ActivityCompat.checkSelfPermission(this, // Checks permission to see if it isnt granted
-//                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//            ActivityCompat.checkSelfPermission(this,
-//                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, // Create a dialog to ask for the permissions.
-//                arrayOf(
-//                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-//                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-//                ),
-//                1 // https://stackoverflow.com/questions/44309857/request-code-for-permissions-in-android - Seems like it's used for more interanl tracking.
-//            )
-//            false // Returns false if the permission is not granted.
-//        } else {
-//            true // Otherwise, it's true!
-//        }
-//    }
 }
-
-
-/**
- * Preview for Android Studio IDE.
- */
-//@Preview
-//@Composable
-//fun StepFriendPreview() {
-//    InitUX(stepsViewModel)
-//}
