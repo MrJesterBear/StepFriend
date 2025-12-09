@@ -88,15 +88,15 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertWalk(57.567434, -4.037932)
                     insertWaypoint(1, 57.568807, -4.038641)
                     insertWaypoint(1, 57.570257, -4.039607)
-                    finishWalk(1, 57.571983, -4.041130)
+                    finishWalk(0, 57.571983, -4.041130)
 
 //                    // DummyData2
                     insertWalk(57.472663, -4.194736)
-                    insertWaypoint(2, 57.473205, -4.200456)
-                    insertWaypoint(2, 57.472895, -4.208405)
-                    insertWaypoint(2, 57.470399, -4.212899)
-                    insertWaypoint(2, 57.468421, -4.213652)
-                    finishWalk(2, 57.466014, -4.210810)
+                    insertWaypoint(1, 57.473205, -4.200456)
+                    insertWaypoint(1, 57.472895, -4.208405)
+                    insertWaypoint(1, 57.470399, -4.212899)
+                    insertWaypoint(1, 57.468421, -4.213652)
+                    finishWalk(1, 57.466014, -4.210810)
 
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
@@ -214,11 +214,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
             // get last walk id.
 //            val oldData: List<WalkEntity> = _dao.getWalks()
 //
-//            val newID = oldData[0].walkID
+            val newID = walkID + 1
 
             println("FINISHING WALK $walkID WITH $Lat,$Lng")
             // Post data.
-            val rowsAffected = _dao.finaliseWalk(Lat, Lng, walkID)
+            val rowsAffected = _dao.finaliseWalk(Lat, Lng, newID)
             if (rowsAffected != 1) {
                 // Log an error if the update failed.
                 // This indicates a problem with the walkID.
@@ -249,8 +249,10 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 //                waypointID = oldData[0].waypointID + 1 // Last ID + 1
 //            }
 
+            var newID = walkID + 1
+
             // Construct Waypoint Data.
-            val newWaypoint = WaypointEntity(walkID = walkID, waypointLat = Lat, waypointLng = Lng)
+            val newWaypoint = WaypointEntity(walkID = newID, waypointLat = Lat, waypointLng = Lng)
 
             // Post Data
             _dao.insertWaypoint(newWaypoint)

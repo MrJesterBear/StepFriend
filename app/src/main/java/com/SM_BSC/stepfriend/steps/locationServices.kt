@@ -27,7 +27,7 @@ fun checkLocationPermissions(activity: MainActivity): Boolean {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ),
-            1 // https://stackoverflow.com/questions/44309857/request-code-for-permissions-in-android - Seems like it's used for more interanl tracking.
+            1 // https://stackoverflow.com/questions/44309857/request-code-for-permissions-in-android - Seems like it's used for more internal tracking.
         )
         false // Returns false if the permission is not granted.
     } else {
@@ -36,7 +36,7 @@ fun checkLocationPermissions(activity: MainActivity): Boolean {
 }
 
 fun checkLocationType(activity: MainActivity): Int {
-    if ((ActivityCompat.checkSelfPermission(activity, // Checks permission to see if it isnt granted
+    if ((ActivityCompat.checkSelfPermission(activity, // Checks permission to see if it isn't granted
             Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED )) {
         // Assume fine location is good.
         return Priority.PRIORITY_HIGH_ACCURACY

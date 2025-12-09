@@ -88,16 +88,24 @@ class MainActivity : ComponentActivity() {
             permissionTick = true
         }
 
+
+
         setContent {
-            InitAccelerometer(this)
+            // Create the lists for steps.
+            val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+            InitAccelerometer(this, stepList)
+            InitUX(stepsViewModel, stepList, this)
+
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onResume() { // Resu
+    override fun onResume() { // Resume the app.
         super.onResume()
         setContent {
-            InitAccelerometer(this)
+            val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+            InitAccelerometer(this, stepList)
+            InitUX(stepsViewModel, stepList, this)
         }
     }
 
@@ -108,7 +116,7 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitAccelerometer(activity: MainActivity) {
+fun InitAccelerometer(activity: MainActivity, stepList: List<StepsEntity>) {
 
     // get composable context.
     val context = LocalContext.current
@@ -150,9 +158,6 @@ fun InitAccelerometer(activity: MainActivity) {
     }
 
     // Now that a listener has been created, calculate the actual logic.
-
-    // Create the lists for steps.
-    val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
 
     // Set steps to the current steps taken today.
      stepList.forEach { list ->
@@ -207,8 +212,6 @@ fun InitAccelerometer(activity: MainActivity) {
     val currentDate = LocalDate.now().format(formatter)
 
     stepsViewModel.updateListDay(currentDate)
-
-    InitUX(stepsViewModel, stepList, activity)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
