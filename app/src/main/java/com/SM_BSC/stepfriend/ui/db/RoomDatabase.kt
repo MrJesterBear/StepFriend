@@ -41,7 +41,7 @@ data class UpgradesEntity(
 // Entity for Walking tracking
 @Entity
 data class WalkEntity(
-    @PrimaryKey var walkID: Int, //ID of a walk.
+    @PrimaryKey(autoGenerate = true) var walkID: Int = 0, //ID of a walk.
     @ColumnInfo(name = "date") var date: String, // Date of walk (foreign key for step class.)
     @ColumnInfo(name = "startingLat") var startLat: Double, //Lat for starting
     @ColumnInfo(name = "StartingLng") var startLng: Double, //Lng for starting
@@ -52,7 +52,7 @@ data class WalkEntity(
 
 @Entity
 data class WaypointEntity(
-    @PrimaryKey var waypointID: Int, // ID of waypoint
+    @PrimaryKey(autoGenerate = true) var waypointID: Int = 0, // ID of waypoint
     @ColumnInfo(name = "walkID") var walkID: Int, // PK/FK for the walk entity.
     @ColumnInfo(name = "waypointLat") var waypointLat: Double,
     @ColumnInfo(name = "waypointLng") var waypointLng: Double,
