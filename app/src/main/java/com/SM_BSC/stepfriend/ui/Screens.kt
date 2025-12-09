@@ -15,7 +15,6 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,7 +53,6 @@ import com.google.android.gms.common.util.CollectionUtils.listOf
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -62,8 +61,6 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -71,11 +68,8 @@ import java.util.Timer
 import kotlin.concurrent.scheduleAtFixedRate
 
 // Global Variables for usage.
-var lat: Double = 0.0
-var lng: Double = 0.0
-
 var mapID: Int = 0
-var walkID: Int = 0
+
 
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
@@ -106,10 +100,12 @@ fun MainScreen(
 // Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
     val scope = rememberCoroutineScope() // Get routine info.
     val snackbarHostState = remember { SnackbarHostState() } // Remember the state of the snackbar.
-    var buttonChoice: Boolean =  false
+    var buttonChoice: Boolean =  remember {false}
 
     var timer: Timer = Timer("GeolocationTask", false)
-    var timerCanceled: Boolean = false
+    var timerCanceled: Boolean = remember {false}
+
+    var walkID: Int by remember { mutableIntStateOf(0) }
 
 
     // Create viewmodel for walks
@@ -147,36 +143,32 @@ fun MainScreen(
                     buttonChoice = true
                     print("Button should now be true as starting timer: $buttonChoice")
 
-
                     // Update Button Text.
 //                    walkText = mutableStateOf("Stop your Walk")
 //                    walkSubText = mutableStateOf("Stopping will create a new record for your history.")
+
                     if (timerCanceled) {
                         timer = Timer("GeolocationTask", false)
                         timerCanceled = true
                     }
 
-                    println("old Lat $lat / Lng $lng")
-                    // Create a walk by running the logic once.
-                    walkLogic(fusedLocationClient, activity)
-                    println("New Lat $lat / Lng $lng")
+                    //Get last walkID for doing stuff.
+                    stepsViewModel.updateWalks()
+                    walkID = walkList!![0].walkID
 
-                    // Populate with the new variables.
-                    stepsViewModel.insertWalk(walkID,lat, lng)
+                    // Create a walk by running the logic once.
+                    walkLogic(fusedLocationClient, activity, walkID, "Insert", stepsViewModel)
 
                     // Get the most recent ID
                     stepsViewModel.updateWalks()
-                    println("New WalkID ${walkList!![0].walkID}")
+                    println("New WalkID ${walkList!![0].walkID}") // If last walkID is 2, new walkID should be 3.
 
                     // Start the timer task. https://stackoverflow.com/questions/43348623/how-to-call-a-function-after-delay-in-kotlin
                     timer.scheduleAtFixedRate(500, 5000) { // After 30 second increments, run this method.
-                        println("old Lat $lat / Lng $lng")
-                        walkLogic(fusedLocationClient, activity)
-                        println("New Lat $lat / Lng $lng")
-//                            stepsViewModel.insertWaypoint(walkList!![0].walkID,lat, lng)
+                        walkLogic(fusedLocationClient, activity, walkID, "Waypoint", stepsViewModel)
+                        println("Logic ran in timer")
                     }
 
-//
                     scope.launch {
                         snackbarHostState.showSnackbar("Walk Started")
                     }
@@ -194,11 +186,12 @@ fun MainScreen(
                     timer.cancel()
                     timerCanceled = true
 
-                    // Get the final details.
-                    walkLogic(fusedLocationClient, activity)
+                    //Get last walkID for doing stuff.
                     stepsViewModel.updateWalks()
+                    walkID = walkList!![0].walkID
 
-                    stepsViewModel.finishWalk(walkList!![0].walkID, lat, lng)
+                    // Get the final details.
+                    walkLogic(fusedLocationClient, activity, walkID, "Finish", stepsViewModel)
 
                     scope.launch {
                         snackbarHostState.showSnackbar("Walk Finished.")
@@ -214,8 +207,15 @@ fun MainScreen(
         }
     }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-fun walkLogic(fusedLocationClient: FusedLocationProviderClient, activity: MainActivity) {
+fun walkLogic(
+    fusedLocationClient: FusedLocationProviderClient,
+    activity: MainActivity,
+    walkID: Int,
+    type: String,
+    stepsViewModel: StepViewModel
+) {
 
     val priority = checkLocationType(activity)
     fusedLocationClient.getCurrentLocation(
@@ -228,17 +228,36 @@ fun walkLogic(fusedLocationClient: FusedLocationProviderClient, activity: MainAc
             else {
                 val lat = location.latitude
                 val lng = location.longitude
-//                println("Lat: $lat , Long: $lng")
-                setLatAndLng(lat, lng)
+                println("Lat: $lat , Long: $lng")
+                setLatAndLng(lat, lng, walkID, type, stepsViewModel)
             }
 
         }
 
 }
 
-fun setLatAndLng(newLat: Double, newLng: Double) {
-    lat = newLat
-    lng = newLng
+@RequiresApi(Build.VERSION_CODES.O)
+fun setLatAndLng(
+    newLat: Double,
+    newLng: Double,
+    walkID: Int,
+    type: String,
+    stepsViewModel: StepViewModel
+) {
+
+    // Determine what to do.
+   if (type == "Insert") {
+       println("Insert chosen.")
+       stepsViewModel.insertWalk(walkID, newLat, newLng)
+   } else if (type == "Waypoint") {
+       println("Waypoint Chosen")
+        stepsViewModel.insertWaypoint(walkID, newLat, newLng)
+   } else {
+       // Assume it is finished.
+       println("No match, Finish Walk.")
+       stepsViewModel.finishWalk(walkID, newLat, newLng)
+   }
+
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -330,16 +349,17 @@ fun MapScreen(
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
 
+//    waypointList?.forEach { waypoint ->
+//        LatLng(waypoint.waypointLat, waypoint.waypointLng)
+//    }
 
 
 //     Create a list of waypoints for creating a route.
     var routeCoordinates: List<LatLng> = listOf(
         startingCoords, // Starting Position
-        waypointList?.forEach { waypoint ->
-            LatLng(waypoint.waypointLat, waypoint.waypointLng)
-        },// Waypoints in here.
+     // Waypoints in here.
         endingCoords // Ending Position
-    ) as List<LatLng>
+    )
 
     var newCoordinates: List<LatLng> = routeCoordinates
 
