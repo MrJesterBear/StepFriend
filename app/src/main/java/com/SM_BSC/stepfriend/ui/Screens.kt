@@ -107,6 +107,8 @@ fun MainScreen(
 
     var walkID: Int by remember { mutableIntStateOf(0) }
 
+    var buttonMainText by remember {mutableStateOf("Start Walk")}
+    var buttonSubText by remember { mutableStateOf("(Requires location permissions)")}
 
     // Create viewmodel for walks
     Scaffold(
@@ -144,24 +146,22 @@ fun MainScreen(
                     print("Button should now be true as starting timer: $buttonChoice")
 
                     // Update Button Text.
-//                    walkText = mutableStateOf("Stop your Walk")
-//                    walkSubText = mutableStateOf("Stopping will create a new record for your history.")
+                    buttonMainText = "Stop your Walk"
+                    buttonSubText = "Stopping will create a new record for your history."
 
                     if (timerCanceled) {
                         timer = Timer("GeolocationTask", false)
                         timerCanceled = true
                     }
 
-                    //Get last walkID for doing stuff.
-                    stepsViewModel.updateWalks()
-                    walkID = walkList!![0].walkID
-
                     // Create a walk by running the logic once.
                     walkLogic(fusedLocationClient, activity, walkID, "Insert", stepsViewModel)
 
                     // Get the most recent ID
                     stepsViewModel.updateWalks()
-                    println("New WalkID ${walkList!![0].walkID}") // If last walkID is 2, new walkID should be 3.
+                    walkID = walkList!![0].walkID
+//                    walkID++
+                    println("New WalkID $walkID")
 
                     // Start the timer task. https://stackoverflow.com/questions/43348623/how-to-call-a-function-after-delay-in-kotlin
                     timer.scheduleAtFixedRate(500, 5000) { // After 30 second increments, run this method.
@@ -179,16 +179,17 @@ fun MainScreen(
                     println("Button should now be false as cancelling timer: $buttonChoice")
 
                     // Update Text
-//                    walkText = mutableStateOf("Start your Walk")
-//                    walkSubText = mutableStateOf("(Requires Location Permissions)")
+                    buttonMainText = "Start your Walk"
+                    buttonSubText = "(Requires Location Permissions)"
 
                     // Stop Timer and do a final geolocation call.
                     timer.cancel()
                     timerCanceled = true
 
-                    //Get last walkID for doing stuff.
                     stepsViewModel.updateWalks()
                     walkID = walkList!![0].walkID
+
+                    println("Walk is now finished on ID $walkID")
 
                     // Get the final details.
                     walkLogic(fusedLocationClient, activity, walkID, "Finish", stepsViewModel)
@@ -199,8 +200,8 @@ fun MainScreen(
                 }
             }) {
 
-                Text(text = "Start Walk", fontSize = 26.sp)
-                Text(text = "(Requires Location Permissions)", fontSize = 16.sp)
+                Text(text = "$buttonMainText", fontSize = 26.sp)
+                Text(text = "$buttonSubText", fontSize = 16.sp)
             }
 
             }
@@ -248,7 +249,7 @@ fun setLatAndLng(
     // Determine what to do.
    if (type == "Insert") {
        println("Insert chosen.")
-       stepsViewModel.insertWalk(walkID, newLat, newLng)
+       stepsViewModel.insertWalk(newLat, newLng)
    } else if (type == "Waypoint") {
        println("Waypoint Chosen")
         stepsViewModel.insertWaypoint(walkID, newLat, newLng)

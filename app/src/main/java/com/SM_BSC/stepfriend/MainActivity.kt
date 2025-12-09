@@ -216,11 +216,11 @@ fun InitAccelerometer(activity: MainActivity) {
 fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>, activity: MainActivity) {
 
     // Create the upgrades list.
-    val upgrades by stepsViewModel.upgradesList.observeAsState()
+    val upgrades by stepsViewModel.upgradesList.observeAsState(emptyList())
     stepsViewModel.updateUpgradesList()
 
     // Create walk list
-    val walkList by stepsViewModel.walkList.observeAsState()
+    val walkList by stepsViewModel.walkList.observeAsState(emptyList())
     stepsViewModel.updateWalks()
 
     // test print outs
