@@ -18,6 +18,7 @@ roomMigration = "2.8.3"
 roomRuntime = "2.8.3"
 runtimeLivedata = "1.9.4"
 playServicesLocation = "21.3.0"
+foundationLayout = "1.10.0"
 
 [libraries]
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
@@ -46,6 +47,7 @@ androidx-room-migration = { group = "androidx.room", name = "room-migration", ve
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
 androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

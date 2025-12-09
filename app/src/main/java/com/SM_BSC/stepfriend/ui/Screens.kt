@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 06/12/2025
- * @version v2.1
+ * @since 09/12/2025
+ * @version v2.2
  */
 
 package com.SM_BSC.stepfriend.ui
@@ -10,9 +10,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Build
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,11 +66,23 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Timer
 import kotlin.concurrent.scheduleAtFixedRate
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.SM_BSC.stepfriend.R
+import com.SM_BSC.stepfriend.steps.checkLocationPermissions
 
 // Global Variables for usage.
 var mapID: Int = 0
 
-
+/**
+ * @param route - Determines which route to take.
+ * Tells the nav host what screen is which and how to route.
+ */
 sealed class Screen (var route: String) {
     object Menu: Screen("menu_screen") // Top Left Nav
     object History: Screen("history_screen") // Top Right Nav
@@ -81,11 +93,25 @@ sealed class Screen (var route: String) {
 
 }
 
+/**
+ * @param innerPadding - The padding taken from the Scaffold.
+ * A menu screen for additional functionality
+ * TODO(Add Buttons for things like Clearing Data/Restarting, etc.)
+ */
 @Composable
 fun MenuScreen(innerPadding: PaddingValues) {
     Text(text = "The Menu Screen", Modifier.padding(innerPadding))
 }
 
+/**
+ * @param innerPadding - The padding taken from the Scaffold.
+ * @param steps - the stepList for the database information
+ * @param stepsViewModel - the view model for access database methods for the walk functionality
+ * @param activity - the context of the activity.
+ * @param fusedLocationClient - the location functionality for gathering coordinates for walk functionality.
+ * @param walkList - the list for database information for walks.
+ * The main screen that handles showcasing changes in step information and granting the ability to start/stop walks.
+ */
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -97,8 +123,7 @@ fun MainScreen(
     fusedLocationClient: FusedLocationProviderClient,
     walkList: List<WalkEntity>?,
 ) {
-// Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
-    val scope = rememberCoroutineScope() // Get routine info.
+    val scope = rememberCoroutineScope() // Get context info, similar to activity.
     val snackbarHostState = remember { SnackbarHostState() } // Remember the state of the snackbar.
     var buttonChoice: Boolean =  remember {false}
 
@@ -110,7 +135,7 @@ fun MainScreen(
     var buttonMainText by remember {mutableStateOf("Start Walk")}
     var buttonSubText by remember { mutableStateOf("(Requires location permissions)")}
 
-    // Create viewmodel for walks
+    // Example of Snackbar taken from official docs with comments for understanding (https://developer.android.com/develop/ui/compose/components/snackbar)
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -127,9 +152,21 @@ fun MainScreen(
             )
         }
     ) {
-        Column() {
+        Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { // Step information.
+
             steps.forEach { step ->
+                // Image for some flare.
                 Column(Modifier.padding(innerPadding)) {
+                    Image(
+                        painter = painterResource(id = R.drawable.step),
+                        contentDescription = "A set of footprints.",
+                        modifier = Modifier.height(128.dp).width(128.dp),
+                        alignment = Alignment.Center,
+                    )
+
+                    Spacer(Modifier.padding(16.dp))
+
+                    // Information for the steps.
                     Text(text = "Total Steps: ${step.totalSteps}")
                     Text(text = "Steps Today: ${step.stepsToday}")
                     Text(text = "Upgraded Steps: ${step.updatedSteps}")
@@ -137,69 +174,95 @@ fun MainScreen(
                 }
             }
 
-            Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
+            Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = { // The Start/Stop walk button
                 if (!buttonChoice) {
                     // Check here to ensure that location has been enabled.
+                    if (checkLocationPermissions(activity)) { // If location services enabled, continue
 
-                    // Button has not been pressed yet, start the walk logic
-                    buttonChoice = true
-                    print("Button should now be true as starting timer: $buttonChoice")
 
-                    // Update Button Text.
-                    buttonMainText = "Stop your Walk"
-                    buttonSubText = "Stopping will create a new record for your history."
+                        // Button has not been pressed yet, start the walk logic
+                        buttonChoice = true
+                        print("Button should now be true as starting timer: $buttonChoice")
 
-                    if (timerCanceled) {
-                        timer = Timer("GeolocationTask", false)
-                        timerCanceled = true
-                    }
+                        // Update Button Text.
+                        buttonMainText = "Stop your Walk"
+                        buttonSubText = "Stopping will create a new record for your history."
 
-                    // Create a walk by running the logic once.
-                    walkLogic(fusedLocationClient, activity, walkID, "Insert", stepsViewModel)
+                        if (timerCanceled) {
+                            timer = Timer("GeolocationTask", false)
+                            timerCanceled = true
+                        }
 
-                    // Get the most recent ID
-                    stepsViewModel.updateWalks()
-                    walkID = walkList!![0].walkID
+                        // Create a walk by running the logic once.
+                        walkLogic(fusedLocationClient, activity, walkID, "Insert", stepsViewModel)
+
+                        // Get the most recent ID
+                        stepsViewModel.updateWalks()
+                        walkID = walkList!![0].walkID
 //                    walkID++
-                    println("New WalkID $walkID")
+                        println("New WalkID $walkID")
 
-                    // Start the timer task. https://stackoverflow.com/questions/43348623/how-to-call-a-function-after-delay-in-kotlin
-                    timer.scheduleAtFixedRate(500, 5000) { // After 30 second increments, run this method.
-                        walkLogic(fusedLocationClient, activity, walkID, "Waypoint", stepsViewModel)
-                        println("Logic ran in timer")
+                        // Start the timer task. https://stackoverflow.com/questions/43348623/how-to-call-a-function-after-delay-in-kotlin
+                        timer.scheduleAtFixedRate(
+                            500,
+                            5000
+                        ) { // After 30 second increments, run this method.
+                            walkLogic(
+                                fusedLocationClient,
+                                activity,
+                                walkID,
+                                "Waypoint",
+                                stepsViewModel
+                            )
+                            println("Logic ran in timer")
+                        }
+
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Walk Started")
+                        }
+                    } else { // if location services are not enabled, worry.
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Enable location services to use this feature.")
+                        }
                     }
 
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Walk Started")
-                    }
                 } else {
-                    // Button has been pressed, so clean up.
-                    buttonChoice = false
+                    // While this point should never be gotten to, check for location permissions just in case.
+                    if (checkLocationPermissions(activity)) {
 
-                    println("Button should now be false as cancelling timer: $buttonChoice")
 
-                    // Update Text
-                    buttonMainText = "Start your Walk"
-                    buttonSubText = "(Requires Location Permissions)"
+                        // Button has been pressed, so clean up.
+                        buttonChoice = false
 
-                    // Stop Timer and do a final geolocation call.
-                    timer.cancel()
-                    timerCanceled = true
+                        println("Button should now be false as cancelling timer: $buttonChoice")
 
-                    stepsViewModel.updateWalks()
-                    walkID = walkList!![0].walkID
+                        // Update Text
+                        buttonMainText = "Start your Walk"
+                        buttonSubText = "(Requires Location Permissions)"
 
-                    println("Walk is now finished on ID $walkID")
+                        // Stop Timer and do a final geolocation call.
+                        timer.cancel()
+                        timerCanceled = true
 
-                    // Get the final details.
-                    walkLogic(fusedLocationClient, activity, walkID, "Finish", stepsViewModel)
+                        stepsViewModel.updateWalks()
+                        walkID = walkList!![0].walkID
 
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Walk Finished.")
+                        println("Walk is now finished on ID $walkID")
+
+                        // Get the final details.
+                        walkLogic(fusedLocationClient, activity, walkID, "Finish", stepsViewModel)
+
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Walk Finished.")
+                        }
+                    }else {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Enable location services to use this feature.")
+                        }
                     }
                 }
             }) {
-
+                // Card Text
                 Text(text = "$buttonMainText", fontSize = 26.sp)
                 Text(text = "$buttonSubText", fontSize = 16.sp)
             }
@@ -208,6 +271,13 @@ fun MainScreen(
         }
     }
 
+/**
+ * @param fusedLocationClient - Used for getting GPS coordinates.
+ * @param activity - The context of the main application.
+ * @param walkID - The walk ID for the current walk, to be used for queries to the DB.
+ * @param type - The type of transaction to occur when updating the database (passed through.)
+ * @param stepsViewModel - Access to the database methods.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 fun walkLogic(
@@ -218,18 +288,20 @@ fun walkLogic(
     stepsViewModel: StepViewModel
 ) {
 
+    // Get the current coordinates using a priority determined by the agreed permissions.
     val priority = checkLocationType(activity)
     fusedLocationClient.getCurrentLocation(
         priority,
         CancellationTokenSource().token
     )
-        .addOnSuccessListener { location: Location? ->
+        .addOnSuccessListener { location: Location? -> // On a successful execution, check to see if there was a delivered location.
             if (location == null)
-                Toast.makeText(activity, "Cannot get location.", Toast.LENGTH_SHORT).show()
+                println("Location could not be gotten.")
             else {
                 val lat = location.latitude
                 val lng = location.longitude
                 println("Lat: $lat , Long: $lng")
+
                 setLatAndLng(lat, lng, walkID, type, stepsViewModel)
             }
 
@@ -237,6 +309,13 @@ fun walkLogic(
 
 }
 
+/**
+ * @param newLat - the new Latitude to post to DB.
+ * @param newLng - the new longitude to post to DB
+ * @param walkID - the walkID used to find the correct entry to update
+ * @param type - the type of DB interaction to execute.
+ * @param stepsViewModel - The view model to access DB functions.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 fun setLatAndLng(
     newLat: Double,
@@ -261,6 +340,11 @@ fun setLatAndLng(
 
 }
 
+/**
+ * @param innerPadding - padding based on ui scaffold.
+ * @param stepsViewModel - View model to access the database for walk history.
+ * @param navController - The nav controller to allow for routing to a new screen.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HistoryScreen(
@@ -268,8 +352,6 @@ fun HistoryScreen(
     stepsViewModel: StepViewModel,
     navController: NavHostController
 ) {
-//    Text(text = "The History Screen", Modifier.padding(innerPadding))
-
 //    Create Cards for the last 4 walks
     val walks by stepsViewModel.walkList.observeAsState()
     stepsViewModel.updateWalks()
@@ -287,9 +369,9 @@ fun HistoryScreen(
                 } else {
                     walks?.forEach { walk ->
                         Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
-                              mapID = walk.walkID
-                            
-                            // PUt the walk ID to the main activity.
+                            // Store the mapID as a global variable to use it on the map screen.
+                            mapID = walk.walkID
+
                             
                             // Route to the map screen.
                             navController.navigate(Screen.Map.route)
@@ -298,17 +380,20 @@ fun HistoryScreen(
                             Text(text = "Start Coords: ${walk.startLat},${walk.startLng}")
                             Text(text = "End Coords: ${walk.endLat},${walk.endLng}")
                         }
-
+                        // Space the cards out.
+                        Spacer(Modifier.padding(10.dp))
                     }
                 }
             }
-
         }
-
     }
-
 }
 
+/**
+ * @param innerPadding - Modifier details from Scaffold
+ * @param stepsViewModel - viewmodel for accessing the DB
+ * @param navController - Nav controller for returning to the previous page.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
@@ -338,31 +423,39 @@ fun MapScreen(
         endingCoords = LatLng(walk.endLat!!, walk.endLng!!)
     }
 
-    println("MapID : $mapID")
-    println("StartingCoords: $startingCoords")
-
     val targetPos = startingCoords // Target Position will be the start location.
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(targetPos, 15f)
     }
 
+    // Properties for the map and how it should render.
     var properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
 
-//    waypointList?.forEach { waypoint ->
-//        LatLng(waypoint.waypointLat, waypoint.waypointLng)
-//    }
-
-
-//     Create a list of waypoints for creating a route.
+    //     Create a list of waypoints, starting with
     var routeCoordinates: List<LatLng> = listOf(
-        startingCoords, // Starting Position
-     // Waypoints in here.
-        endingCoords // Ending Position
+        startingCoords
     )
 
-    var newCoordinates: List<LatLng> = routeCoordinates
+    // Initalise a blank list.
+    var waypointRoute: List<LatLng> = listOf()
+
+    // Go through the waypoints and concatenate them with the previous list
+    // (Lists are read only.
+    waypointList?.forEach { waypoint ->
+         waypointRoute = waypointRoute + LatLng(waypoint.waypointLat, waypoint.waypointLng)
+    }
+
+    // .plus is the same as +. add the ending coords.
+    waypointRoute = waypointRoute.plus(endingCoords)
+
+    // Finally add it all together.
+    var newCoordinates: List<LatLng> = routeCoordinates.plus(waypointRoute)
+
+    newCoordinates.forEach { waypoint ->
+        println("${waypoint.latitude},${waypoint.longitude}")
+    }
 
     Column(Modifier.padding(innerPadding)) {
 
@@ -393,6 +486,12 @@ fun MapScreen(
     }
 }
 
+/**
+ * @param innerPadding - Scaffolding Modifiers
+ * @param stepsViewModel - ViewModel to access the database
+ * @param upgrades - List to view and display the upgrades
+ * @param steps - List to check if enough steps to buy upgrade.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -429,6 +528,7 @@ fun UpgradeScreen(
 
         Column(Modifier.fillMaxSize()) {
             upgrades?.forEach { upgrade ->
+                // Display Upgrade
                 Column(Modifier.padding(10.dp)) {
                     Card(modifier = Modifier.size(width = 500.dp, height = 100.dp), onClick = {
                         scope.launch { // run this function when the card is clicked.
@@ -464,6 +564,15 @@ fun UpgradeScreen(
     }
 }
 
+/**
+ * @param ID - the ID of the upgrade being purchased.
+ * @param price - the price of the upgrade being purchased
+ * @param quantityOwned - the amount of the ugprade the user has.
+ * @param upgrades - The list to get information about the upgrades from the DB.
+ * @param steps - the list to get information about the step count from the DB.
+ * @param stepsViewModel - the viewmodel to interact with the database.
+ * @param snackbarHostState - the snackbar class object to inform user.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 suspend fun buyUpgrade(
     ID: Int,
@@ -474,8 +583,6 @@ suspend fun buyUpgrade(
     stepsViewModel: StepViewModel,
     snackbarHostState: SnackbarHostState
 ) {
-//    println("hehe this has been pressed: $ID" )
-
     // Check to see if can be afforded.
     var pos: Int = ID - 1
     var multiplier: Int
@@ -527,6 +634,9 @@ suspend fun buyUpgrade(
 
 }
 
+/**
+ * @param innerPadding - Modifier values from Scaffold.
+ */
 @Composable
 fun InformationScreen(innerPadding: PaddingValues) {
     Text(text = "The Information Screen", Modifier.padding(innerPadding))

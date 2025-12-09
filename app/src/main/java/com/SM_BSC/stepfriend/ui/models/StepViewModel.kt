@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 06/12/2025
- * @version v1.2
+ * @since 09/12/2025
+ * @version v1.3
  */
 
 package com.SM_BSC.stepfriend.ui.models
@@ -34,6 +34,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         "StepDB"
     ).build()
 
+    // Lists and LiveData for Rooms.
 
     private val _dao = _db.roomDao() // Access the Dao Methods for the database
     private val _steps = MutableLiveData<List<StepsEntity>>()
@@ -59,6 +60,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     private val _mapWaypoint = MutableLiveData<List<WaypointEntity>>()
      val mapWaypointList: LiveData<List<WaypointEntity>> get() = _mapWaypoint
 
+    /**
+     * Initialises the database when this view model is called.
+     * Method checks to see if a date has been created for today, and if not will do that.
+     * Also checks for old data if it needs to add other information like upgrades.
+     */
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
             // https://www.baeldung.com/kotlin/current-date-time
@@ -84,18 +90,17 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertUpgrade(UpgradesEntity(3, "Protein Bar", "Buy a Nutritious Bar of processed protein!", 3000.00, 4.0, 0))
                     insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
 
-                    // DummyData
+                    // DummyData for walk 1
                     insertWalk(57.567434, -4.037932)
-                    insertWaypoint(1, 57.568807, -4.038641)
-                    insertWaypoint(1, 57.570257, -4.039607)
+                    insertWaypoint(0, 57.568807, -4.038641)
+                    insertWaypoint(0, 57.570257, -4.039607)
                     finishWalk(0, 57.571983, -4.041130)
 
-//                    // DummyData2
+//                    // DummyData for walk 2
                     insertWalk(57.472663, -4.194736)
                     insertWaypoint(1, 57.473205, -4.200456)
                     insertWaypoint(1, 57.472895, -4.208405)
                     insertWaypoint(1, 57.470399, -4.212899)
-                    insertWaypoint(1, 57.468421, -4.213652)
                     finishWalk(1, 57.466014, -4.210810)
 
                 } else {
@@ -140,11 +145,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // close database.
     fun closeDB() {
         _db.close()
     }
 
+    // Updates the step record of today - Used for when a step is taken.
     fun updateCurrentStepRecord(totalSteps: Double?, stepsToday: Int?, updatedSteps: Double?) {
         // get current date
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -159,6 +164,8 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * UPGRADE METHODS
      */
+
+    // Used for when a purchase is successful.
     fun updateUpgradeQuantity(ID: Int, amount: Int) {
 
         // Run Query
@@ -179,6 +186,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Updates the user's step information once an upgrade is bought.
     fun updateStepUpgrade(newUpgradePercantage: Double, date: String, newTotal: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             _dao.updateStepPercentage(date, newUpgradePercantage, newTotal)
@@ -194,6 +202,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Inserts walk data when a walk has started - Auto Incrementing
     fun insertWalk(Lat: Double, Lng: Double) {
         viewModelScope.launch(Dispatchers.IO) {
 
@@ -209,11 +218,10 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Inserts final walk data when it has ended
     fun finishWalk(walkID: Int, Lat: Double, Lng: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            // get last walk id.
-//            val oldData: List<WalkEntity> = _dao.getWalks()
-//
+            // get walk id.
             val newID = walkID + 1
 
             println("FINISHING WALK $walkID WITH $Lat,$Lng")
@@ -221,7 +229,6 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
             val rowsAffected = _dao.finaliseWalk(Lat, Lng, newID)
             if (rowsAffected != 1) {
                 // Log an error if the update failed.
-                // This indicates a problem with the walkID.
                 Log.e("StepViewModel", "Failed to finalize walk. Expected 1 row to be affected, but was $rowsAffected. WalkID: $walkID")
             }
         }
@@ -237,18 +244,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     fun insertWaypoint(walkID: Int, Lat: Double, Lng: Double) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            // Get Last ID from Waypoints.
-//            val oldData: List<WaypointEntity> = _dao.getWaypoints(walkID)
-//            var waypointID: Int
-//
-//            if (oldData.isEmpty()) {
-//                // Make the ID 1.
-//                waypointID = 1
-//
-//            } else {
-//                waypointID = oldData[0].waypointID + 1 // Last ID + 1
-//            }
-
+            // Get walkID
             var newID = walkID + 1
 
             // Construct Waypoint Data.
@@ -285,7 +281,4 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         closeDB()
 
     }
-
-
-
 }
