@@ -182,7 +182,7 @@ fun MainScreen(
 
                         // Button has not been pressed yet, start the walk logic
                         buttonChoice = true
-                        print("Button should now be true as starting timer: $buttonChoice")
+//                        println("Button should now be true as starting timer: $buttonChoice")
 
                         // Update Button Text.
                         buttonMainText = "Stop your Walk"
@@ -190,7 +190,7 @@ fun MainScreen(
 
                         if (timerCanceled) {
                             timer = Timer("GeolocationTask", false)
-                            timerCanceled = true
+                            timerCanceled = false
                         }
 
                         // Create a walk by running the logic once.
