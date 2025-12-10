@@ -21,6 +21,8 @@ Part of an Assessment for University. (BSc Computing - Software Development)
 
 ### Connectivity
 - RoomsDB
+- Play-Store Location
+- Google Maps
 
 ## Known Bugs / Issues
 - When the app is closed and re-opened, it takes a while for the step logic to begin working again, but it does after a bit.
