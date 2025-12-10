@@ -1,13 +1,14 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v1,1
+ * @since 09/12/2025
+ * @version v1.3
  */
 
 package com.SM_BSC.stepfriend.ui.models
 
 import android.app.Application
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -17,6 +18,8 @@ import androidx.room.Room
 import com.SM_BSC.stepfriend.ui.db.AppDatabase
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.db.UpgradesEntity
+import com.SM_BSC.stepfriend.ui.db.WalkEntity
+import com.SM_BSC.stepfriend.ui.db.WaypointEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -31,6 +34,7 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         "StepDB"
     ).build()
 
+    // Lists and LiveData for Rooms.
 
     private val _dao = _db.roomDao() // Access the Dao Methods for the database
     private val _steps = MutableLiveData<List<StepsEntity>>()
@@ -41,6 +45,26 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
 
     val upgradesList: LiveData<List<UpgradesEntity>> get() = _upgrades
 
+    // Walk List
+    private val _walk = MutableLiveData<List<WalkEntity>>()
+    val walkList: LiveData<List<WalkEntity>> get() = _walk
+
+    // Waypoint List
+    private val _waypoint = MutableLiveData<List<WaypointEntity>>()
+    val waypointList: LiveData<List<WaypointEntity>> get() = _waypoint
+
+    // Waypoint and Walk list just for maps as to not interrupt location features..
+    private val _mapWalk = MutableLiveData<List<WalkEntity>>()
+     val mapWalkList: LiveData<List<WalkEntity>> get() = _mapWalk
+
+    private val _mapWaypoint = MutableLiveData<List<WaypointEntity>>()
+     val mapWaypointList: LiveData<List<WaypointEntity>> get() = _mapWaypoint
+
+    /**
+     * Initialises the database when this view model is called.
+     * Method checks to see if a date has been created for today, and if not will do that.
+     * Also checks for old data if it needs to add other information like upgrades.
+     */
     init {
         viewModelScope.launch(Dispatchers.IO) { // Allow thread to run queries for setup
             // https://www.baeldung.com/kotlin/current-date-time
@@ -65,6 +89,20 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
                     insertUpgrade(UpgradesEntity(2, "Sneaker Stocks", "Buy a share of stocks in a random Sneaker Company", 1000.00, 1.00, 0))
                     insertUpgrade(UpgradesEntity(3, "Protein Bar", "Buy a Nutritious Bar of processed protein!", 3000.00, 4.0, 0))
                     insertUpgrade(UpgradesEntity(4, "Super Sneakers", "Buy a pair of magical sneakers!", 10000.00, 5.0, 0))
+
+                    // DummyData for walk 1
+                    insertWalk(57.567434, -4.037932)
+                    insertWaypoint(0, 57.568807, -4.038641)
+                    insertWaypoint(0, 57.570257, -4.039607)
+                    finishWalk(0, 57.571983, -4.041130)
+
+//                    // DummyData for walk 2
+                    insertWalk(57.472663, -4.194736)
+                    insertWaypoint(1, 57.473205, -4.200456)
+                    insertWaypoint(1, 57.472895, -4.208405)
+                    insertWaypoint(1, 57.470399, -4.212899)
+                    finishWalk(1, 57.466014, -4.210810)
+
                 } else {
                     insertDay(StepsEntity(currentDate, oldData[0].totalSteps, 0, oldData[0].updatedSteps, oldData[0].upgradedPercent))
                 }
@@ -107,11 +145,11 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // close database.
     fun closeDB() {
         _db.close()
     }
 
+    // Updates the step record of today - Used for when a step is taken.
     fun updateCurrentStepRecord(totalSteps: Double?, stepsToday: Int?, updatedSteps: Double?) {
         // get current date
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -126,6 +164,8 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * UPGRADE METHODS
      */
+
+    // Used for when a purchase is successful.
     fun updateUpgradeQuantity(ID: Int, amount: Int) {
 
         // Run Query
@@ -146,12 +186,90 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Updates the user's step information once an upgrade is bought.
     fun updateStepUpgrade(newUpgradePercantage: Double, date: String, newTotal: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             _dao.updateStepPercentage(date, newUpgradePercantage, newTotal)
         }
     }
 
+    /**
+     * Walk / Waypoint Methods
+     */
+    fun updateWalks() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _walk.postValue(_dao.getWalks())
+        }
+    }
+
+    // Inserts walk data when a walk has started - Auto Incrementing
+    fun insertWalk(Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            // get current date
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            val currentDate = LocalDate.now().format(formatter);
+
+            // Generate the walk list.
+            val newWalk = WalkEntity(date = currentDate, startLat = Lat, startLng = Lng, endLat = null, endLng = null)
+
+            // Post
+            _dao.insertWalk(newWalk)
+        }
+    }
+
+    // Inserts final walk data when it has ended
+    fun finishWalk(walkID: Int, Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // get walk id.
+            val newID = walkID + 1
+
+            println("FINISHING WALK $walkID WITH $Lat,$Lng")
+            // Post data.
+            val rowsAffected = _dao.finaliseWalk(Lat, Lng, newID)
+            if (rowsAffected != 1) {
+                // Log an error if the update failed.
+                Log.e("StepViewModel", "Failed to finalize walk. Expected 1 row to be affected, but was $rowsAffected. WalkID: $walkID")
+            }
+        }
+    }
+
+    fun updateWaypoints(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            _waypoint.postValue(_dao.getWaypoints(walkID))
+        }
+    }
+
+    fun insertWaypoint(walkID: Int, Lat: Double, Lng: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            // Get walkID
+            var newID = walkID + 1
+
+            // Construct Waypoint Data.
+            val newWaypoint = WaypointEntity(walkID = newID, waypointLat = Lat, waypointLng = Lng)
+
+            // Post Data
+            _dao.insertWaypoint(newWaypoint)
+        }
+    }
+
+    /**
+     * MAP SPECIFIC FUNCTIONS.
+     */
+    
+    fun getWalkDetails(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _mapWalk.postValue(_dao.getMapWalk(walkID))            
+        }
+    }
+    
+    fun getWaypointDetails(walkID: Int) {
+        viewModelScope.launch(Dispatchers.IO){ 
+            _mapWaypoint.postValue(_dao.getWaypoints(walkID))
+        }
+    }
 
     /**
      * OVERRIDDEN METHODS
@@ -163,7 +281,4 @@ class StepViewModel(application: Application) : AndroidViewModel(application) {
         closeDB()
 
     }
-
-
-
 }

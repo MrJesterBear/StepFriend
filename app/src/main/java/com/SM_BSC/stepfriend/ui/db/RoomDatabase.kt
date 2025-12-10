@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v2
+ * @since 06/12/2025
+ * @version v2.1
  */
 
 package com.SM_BSC.stepfriend.ui.db
@@ -34,28 +34,28 @@ data class UpgradesEntity(
     @ColumnInfo(name = "upgradeName") val upgradeName: String, // Name of the upgrade
     @ColumnInfo(name = "upgradeDesc") val upgradeDesc: String, // Description of the upgrade.
     @ColumnInfo(name = "basePrice") val basePrice: Double, // The base price of the upgrade (Measured in steps)
-    @ColumnInfo(name = "percentModifier") val percentModifier: Double,
+    @ColumnInfo(name = "percentModifier") val percentModifier: Double, // Percent given for purchase.
     @ColumnInfo(name = "quantityOwned") val quantityOwned: Int? // Quantity of the upgrade owned.
 )
 
 // Entity for Walking tracking
 @Entity
 data class WalkEntity(
-    @PrimaryKey var walkID: Int, //ID of a walk.
+    @PrimaryKey(autoGenerate = true) var walkID: Int = 0, //ID of a walk.
     @ColumnInfo(name = "date") var date: String, // Date of walk (foreign key for step class.)
-    @ColumnInfo(name = "startingLat") var startLat: Double, //Lat for starting
-    @ColumnInfo(name = "StartingLng") var startLng: Double, //Lng for starting
-    @ColumnInfo(name = "endingLat") var endLat: Double,
-    @ColumnInfo(name = "endingLng") var endLng: Double,
+    @ColumnInfo(name = "startingLat") var startLat: Double, //Lat for starting pos
+    @ColumnInfo(name = "StartingLng") var startLng: Double, //Lng for starting pos
+    @ColumnInfo(name = "endingLat") var endLat: Double?, // Lat for ending pos
+    @ColumnInfo(name = "endingLng") var endLng: Double?, // Lng for starting pos
 
     )
 
 @Entity
 data class WaypointEntity(
-    @PrimaryKey var waypointID: Int, // ID of waypoint
+    @PrimaryKey(autoGenerate = true) var waypointID: Int = 0, // ID of waypoint
     @ColumnInfo(name = "walkID") var walkID: Int, // PK/FK for the walk entity.
-    @ColumnInfo(name = "waypointLat") var waypointLat: Double,
-    @ColumnInfo(name = "waypointLng") var waypointLng: Double,
+    @ColumnInfo(name = "waypointLat") var waypointLat: Double, // Lat Pos of waypoint
+    @ColumnInfo(name = "waypointLng") var waypointLng: Double, // Long Pos of waypoint
 )
 
 
@@ -104,6 +104,34 @@ interface RoomDao {
     @Query("SELECT * FROM UpgradesEntity")
     fun getUpgrades(): List<UpgradesEntity>
 
+    /**
+     * WALKS / WAYPOINT QUERIES
+     */
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWalk(vararg walks: WalkEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWaypoint(vararg waypoint: WaypointEntity)
+
+    @Query("SELECT * FROM WalkEntity ORDER BY walkID DESC LIMIT 4") // Last 4 walks.
+    fun getWalks(): List<WalkEntity>
+
+
+
+    @Query("SELECT * FROM WaypointEntity WHERE walkID = :ID")
+    fun getWaypoints(ID: Int): List<WaypointEntity>
+
+    @Query("UPDATE WalkEntity SET endingLat = :LAT, endingLng = :LNG WHERE walkID = :ID")
+    fun finaliseWalk(LAT: Double, LNG: Double, ID: Int): Int
+
+
+    /**
+     * MAP SPECIFIC QUERIES
+     */
+
+    @Query("SELECT * FROM WalkEntity WHERE walkID = :ID")
+    fun getMapWalk(ID: Int) : List<WalkEntity>
 }
 
 @Database(

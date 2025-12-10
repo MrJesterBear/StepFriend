@@ -1,7 +1,7 @@
 /**
  * @author 21005729 / Saul Maylin / MrJesterBear
- * @since 05/12/2025
- * @version v1.2
+ * @since 09/12/2025
+ * @version v1.3
  */
 
 package com.SM_BSC.stepfriend
@@ -53,13 +53,17 @@ import com.SM_BSC.stepfriend.ui.Screen
 import com.SM_BSC.stepfriend.ui.theme.StepFriendTheme
 import androidx.navigation.compose.composable
 import com.SM_BSC.stepfriend.steps.Steps
+import com.SM_BSC.stepfriend.steps.checkLocationPermissions
 import com.SM_BSC.stepfriend.ui.HistoryScreen
 import com.SM_BSC.stepfriend.ui.InformationScreen
 import com.SM_BSC.stepfriend.ui.MainScreen
+import com.SM_BSC.stepfriend.ui.MapScreen
 import com.SM_BSC.stepfriend.ui.MenuScreen
 import com.SM_BSC.stepfriend.ui.UpgradeScreen
 import com.SM_BSC.stepfriend.ui.db.StepsEntity
 import com.SM_BSC.stepfriend.ui.models.StepViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.getValue
@@ -68,20 +72,35 @@ class MainActivity : ComponentActivity() {
     // init class for step counter.
     val stepCounter = Steps()
     val stepsViewModel: StepViewModel by viewModels() // ViewModel instance - wont be used until accessed.
+
+    // Global variable for Location Client.
+    lateinit var fusedLocationClient: FusedLocationProviderClient
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+        // get current context
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        checkLocationPermissions(this)
+
         setContent {
-            InitAccelerometer()
+            // Create the lists for steps.
+            val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+            InitAccelerometer(this, stepList)
+            InitUX(stepList, this)
+
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onResume() { // Resu
+    override fun onResume() { // Resume the app.
         super.onResume()
         setContent {
-            InitAccelerometer()
+            val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+            InitAccelerometer(this, stepList)
+            InitUX(stepList, this)
         }
     }
 
@@ -90,9 +109,13 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
+    /**
+     * @param activity - The context of the current activity. Passing it through for the main screen.
+     * @param stepList - The steplist information for doing step logic.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitAccelerometer() {
+fun InitAccelerometer(activity: MainActivity, stepList: List<StepsEntity>) {
 
     // get composable context.
     val context = LocalContext.current
@@ -133,10 +156,9 @@ fun InitAccelerometer() {
         }
     }
 
-    // Now that a listener has been created, calculate the actual logic.
-
-    // Create the lists for steps.
-    val stepList by stepsViewModel.stepsList.observeAsState(emptyList()) // Watch this data, if it updates the front end will update.
+    /**
+     Now that a listener has been created, calculate the actual logic.
+     */
 
     // Set steps to the current steps taken today.
      stepList.forEach { list ->
@@ -156,6 +178,7 @@ fun InitAccelerometer() {
         // Total Steps (Current steps as currency)
         // steps today (Steps base taken today) // This has been gotten already.
         // updatedSteps steps (step upgraded by the upgradeMultiplier)
+
         var totalSteps: Double? = 1.0
         var updatedSteps: Double? = 1.0
         var upgradeMultiplier: Double? = 1.0
@@ -170,7 +193,7 @@ fun InitAccelerometer() {
 
         // calculate new total steps.
         val stepsDoneToday = steps
-        val upgradedStep: Double = 1 * upgradeMultiplier!! // 1 as in 1 step. this point can only be gotten to if a step has been taken.
+        val upgradedStep: Double = 1 * upgradeMultiplier!! // 1 as in 1 step. this area can only be gotten to if a step has been taken.
         val newTotalUpgraded: Double
 
         if (upgradeMultiplier > 1) {
@@ -186,23 +209,29 @@ fun InitAccelerometer() {
         stepsViewModel.updateCurrentStepRecord(newTotalOverall, stepsDoneToday, newTotalUpgraded)
     }
 
-    // Get Todays Stats
+    // Get Todays Stats for displaying.
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val currentDate = LocalDate.now().format(formatter)
 
     stepsViewModel.updateListDay(currentDate)
-
-    InitUX(stepsViewModel, stepList)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+    /***
+     * @param steps - Pass in the steps list to pass in to the main screen if needed.
+     * @param activity - Passing in the context of the current activity
+     * Initialises the front design for the app.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
+fun InitUX(steps: List<StepsEntity>, activity: MainActivity) {
 
-    // Create the upgrades and walking list.
-    val upgrades by stepsViewModel.upgradesList.observeAsState()
+    // Create the upgrades list.
+    val upgrades by stepsViewModel.upgradesList.observeAsState(emptyList())
     stepsViewModel.updateUpgradesList()
 
+    // Create walk list
+    val walkList by stepsViewModel.walkList.observeAsState(emptyList())
+    stepsViewModel.updateWalks()
 
     // Nav Controller for navigation
     val navController = rememberNavController()
@@ -216,13 +245,16 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
             // Base Default View
             NavHost(navController = navController, startDestination = Screen.Main.route) {
                 composable(route = Screen.Main.route) { // Main Screen
-                    MainScreen(innerPadding, steps)
+                    MainScreen(innerPadding, steps, stepsViewModel, activity, fusedLocationClient, walkList)
                 }
                 composable(route = Screen.Menu.route) { // Menu Screen
                     MenuScreen(innerPadding)
                 }
                 composable(route = Screen.History.route) { // History Screen
-                    HistoryScreen(innerPadding)
+                    HistoryScreen(innerPadding, stepsViewModel, navController)
+                }
+                composable(route = Screen.Map.route) {
+                    MapScreen(innerPadding, stepsViewModel, navController)
                 }
                 composable(route = Screen.Upgrade.route) { // Upgrades Screen
                     UpgradeScreen(innerPadding, stepsViewModel, upgrades, steps)
@@ -235,7 +267,11 @@ fun InitUX(stepsViewModel: StepViewModel, steps: List<StepsEntity>) {
 }
     }
 
-@OptIn(ExperimentalMaterial3Api::class) // Opt in to the experimental material3api
+    /**
+     * @param navController - The nav controller for navigation.
+     * Design for the top navigation bar which includes the Menu and History buttons.
+     */
+    @OptIn(ExperimentalMaterial3Api::class) // Opt in to the experimental material3api
 @Composable
 fun TopBar(navController: NavHostController) {
     TopAppBar(title = {
@@ -258,7 +294,7 @@ fun TopBar(navController: NavHostController) {
                     navController.navigate(Screen.History.route)
                 },
             ) {
-                Icon(
+                Icon( // Material icon, choosing a default icon from material and giving it a description for screen readers.
                     Icons.Default.DateRange,
                     "History Button",
                     Modifier.size(60.dp)
@@ -268,7 +304,11 @@ fun TopBar(navController: NavHostController) {
     })
 }
 
-@Composable
+    /**
+     * @param navController - The nav controller for navigation.
+     * Design for the bottom navigation bar which includes the Home, Upgrades and Information buttons.
+     */
+    @Composable
 fun BottomBar(navController: NavHostController) {
     BottomAppBar {
         TextButton( // Home button
@@ -312,14 +352,5 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
-    }
 
-
-/**
- * Preview for Android Studio IDE.
- */
-//@Preview
-//@Composable
-//fun StepFriendPreview() {
-//    InitUX(stepsViewModel)
-//}
+}
